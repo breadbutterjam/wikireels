@@ -64,7 +64,7 @@ const API = (() => {
   function getCachedHTML(title) {
     return htmlCache.get(title) || null;
   }
-     Always keeps [prev, current, next] loaded.
+  /*    Always keeps [prev, current, next] loaded.
      queue[0] = prev, queue[1] = current, queue[2] = next
      On swipe forward: shift left, fetch new tail.
      On swipe back:    unshift, discard tail.

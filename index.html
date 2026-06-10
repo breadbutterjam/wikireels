@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Rabbit Hole" />
+  <meta name="theme-color" content="#f7f5f0" id="theme-meta" />
+
+  <title>Rabbit Hole</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,500;1,7..72,300;1,7..72,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- ── ARTICLE FEED ───────────────────────────────────────── -->
+  <div id="feed">
+
+    <!-- Active card -->
+    <article id="card-current" class="card card--current" aria-live="polite">
+
+      <!-- ── READER HEADER: visible only in reader mode ── -->
+      <div class="card__reader-header" id="reader-header">
+        <button class="card__back" id="btn-back" aria-label="Back to summary">←</button>
+        <div class="card__reader-header-text">
+          <span class="card__reader-category" id="reader-cat"></span>
+          <span class="card__reader-title-small" id="reader-title-small"></span>
+        </div>
+      </div>
+
+      <!-- ── SUMMARY VIEW ── -->
+      <div class="card__summary" id="card-summary">
+        <div class="card__meta">
+          <span class="card__category" id="cat-current"></span>
+          <button class="card__menu" id="menu-current" aria-label="More options">
+            <span class="card__menu-dot"></span>
+            <span class="card__menu-dot"></span>
+            <span class="card__menu-dot"></span>
+          </button>
+        </div>
+        <h1 class="card__title" id="title-current"></h1>
+        <div class="card__body" id="body-current"></div>
+        <div class="card__fade"></div>
+        <button class="card__readmore" id="readmore-current">read more</button>
+      </div>
+
+      <!-- ── READER VIEW: full article, scrollable ── -->
+      <div class="card__reader" id="card-reader" aria-hidden="true">
+        <h1 class="card__reader-title" id="reader-title"></h1>
+        <div class="card__reader-body" id="reader-body"></div>
+      </div>
+
+    </article>
+
+    <!-- Preloaded next card (off-screen below) -->
+    <article id="card-next" class="card card--next" aria-hidden="true">
+      <div class="card__inner">
+        <div class="card__meta">
+          <span class="card__category" id="cat-next"></span>
+          <button class="card__menu" id="menu-next" aria-label="More options">
+            <span class="card__menu-dot"></span>
+            <span class="card__menu-dot"></span>
+            <span class="card__menu-dot"></span>
+          </button>
+        </div>
+        <h1 class="card__title" id="title-next"></h1>
+        <div class="card__body" id="body-next"></div>
+        <div class="card__fade"></div>
+        <button class="card__readmore" id="readmore-next">read more</button>
+      </div>
+    </article>
+
+    <!-- Preloaded previous card (off-screen above) -->
+    <article id="card-prev" class="card card--prev" aria-hidden="true">
+      <div class="card__inner">
+        <div class="card__meta">
+          <span class="card__category" id="cat-prev"></span>
+        </div>
+        <h1 class="card__title" id="title-prev"></h1>
+        <div class="card__body" id="body-prev"></div>
+        <div class="card__fade"></div>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- ── PERSISTENT ACTION ICONS ────────────────────────────── -->
+  <div id="actions">
+    <button class="action-btn" id="btn-like" aria-label="Like article">
+      <svg class="action-icon action-icon--bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21h6M12 3a6 6 0 0 1 3.75 10.67A3 3 0 0 0 15 16.5v.5H9v-.5a3 3 0 0 0-.75-1.83A6 6 0 0 1 12 3z"/>
+        <path d="M9.5 16.5h5"/>
+      </svg>
+      <div class="action-icon--bulb-glow"></div>
+    </button>
+    <button class="action-btn" id="btn-save" aria-label="Save article">
+      <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ── PROFILE / LIBRARY ICON ─────────────────────────────── -->
+  <button id="btn-profile" aria-label="Your library">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+    </svg>
+  </button>
+
+  <!-- ── LOADING STATE ──────────────────────────────────────── -->
+  <div id="loader" class="loader" aria-label="Loading article" role="status">
+    <div class="loader__ring"></div>
+  </div>
+
+  <!-- ── IMAGE GALLERY OVERLAY ──────────────────────────────── -->
+  <div id="gallery" class="overlay overlay--hidden" role="dialog" aria-modal="true" aria-label="Article images">
+    <button class="overlay__close" id="gallery-close" aria-label="Close gallery">✕</button>
+    <div id="gallery-inner" class="gallery__inner"></div>
+    <div class="gallery__hint">swipe left to close</div>
+  </div>
+
+  <!-- reader overlay removed — expansion is now inline within the card -->
+
+  <!-- ── NOT INTERESTED MENU ────────────────────────────────── -->
+  <div id="context-menu" class="context-menu context-menu--hidden" role="menu">
+    <button class="context-menu__item context-menu__item--destructive" id="menu-dislike" role="menuitem">
+      Not interested in this
+    </button>
+    <button class="context-menu__item" id="menu-share" role="menuitem">
+      Share article
+    </button>
+    <button class="context-menu__item context-menu__item--cancel" id="menu-cancel" role="menuitem">
+      Cancel
+    </button>
+  </div>
+  <div id="context-overlay" class="context-overlay context-overlay--hidden"></div>
+
+  <!-- ── NO IMAGES STATE (template) ────────────────────────── -->
+  <template id="tpl-no-images">
+    <div class="gallery__empty">
+      <svg class="dino-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- Dino body -->
+        <ellipse cx="62" cy="72" rx="26" ry="20" fill="#b5e0b5"/>
+        <!-- Dino head -->
+        <ellipse cx="82" cy="56" rx="16" ry="13" fill="#b5e0b5"/>
+        <!-- Dino eye -->
+        <circle cx="87" cy="52" r="2.5" fill="#2a2a2a"/>
+        <circle cx="88" cy="51" r="0.8" fill="white"/>
+        <!-- Dino spikes -->
+        <polygon points="56,54 60,44 64,54" fill="#8cc88c"/>
+        <polygon points="62,51 66,40 70,51" fill="#8cc88c"/>
+        <polygon points="68,51 72,41 76,51" fill="#8cc88c"/>
+        <!-- Dino arm holding newspaper -->
+        <path d="M60 72 Q50 72 46 80" stroke="#8cc88c" stroke-width="4" stroke-linecap="round"/>
+        <!-- Newspaper -->
+        <rect x="28" y="74" width="24" height="18" rx="2" fill="#f0ebe0" stroke="#ccc5b0" stroke-width="1"/>
+        <line x1="31" y1="80" x2="49" y2="80" stroke="#aaa" stroke-width="1"/>
+        <line x1="31" y1="84" x2="49" y2="84" stroke="#aaa" stroke-width="1"/>
+        <line x1="31" y1="88" x2="43" y2="88" stroke="#aaa" stroke-width="1"/>
+        <!-- Dino tail -->
+        <path d="M36 76 Q28 80 24 90" stroke="#b5e0b5" stroke-width="5" stroke-linecap="round"/>
+        <!-- Legs -->
+        <path d="M52 88 L50 100" stroke="#8cc88c" stroke-width="4" stroke-linecap="round"/>
+        <path d="M66 90 L68 102" stroke="#8cc88c" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <p class="gallery__empty-text">No pictures. Just ideas.</p>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+  <script src="api.js"></script>
+  <script src="store.js"></script>
+  <script src="gestures.js"></script>
+
+</body>
+</html>

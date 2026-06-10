@@ -125,9 +125,26 @@
 
   <!-- ── IMAGE GALLERY OVERLAY ──────────────────────────────── -->
   <div id="gallery" class="overlay overlay--hidden" role="dialog" aria-modal="true" aria-label="Article images">
-    <button class="overlay__close" id="gallery-close" aria-label="Close gallery">✕</button>
-    <div id="gallery-inner" class="gallery__inner"></div>
-    <div class="gallery__hint">swipe left to close</div>
+
+    <!-- Header: back + counter -->
+    <div class="gallery__header">
+      <button class="gallery__back" id="gallery-close" aria-label="Close gallery">←</button>
+      <span class="gallery__counter" id="gallery-counter"></span>
+    </div>
+
+    <!-- Full-screen image stage -->
+    <div class="gallery__stage" id="gallery-stage">
+      <div class="gallery__track" id="gallery-track">
+        <!-- img slides injected here by JS -->
+      </div>
+    </div>
+
+    <!-- Caption below image -->
+    <div class="gallery__caption" id="gallery-caption"></div>
+
+    <!-- Dot indicators -->
+    <div class="gallery__dots" id="gallery-dots" aria-hidden="true"></div>
+
   </div>
 
   <!-- reader overlay removed — expansion is now inline within the card -->

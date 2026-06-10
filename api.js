@@ -36,12 +36,13 @@ const API = (() => {
     const res = await fetch(MEDIA_TITLE(title));
     if (!res.ok) return [];
     const data = await res.json();
+    console.log('Media data:', data);
     /* Filter to actual images, exclude icons/logos/flags (small files) */
     return (data.items || []).filter(item =>
       item.type === 'image' &&
-      item.srcset?.length > 0 &&
-      !item.title.match(/flag|icon|logo|symbol|map|coa|coat/i) &&
-      (item.original?.width || 0) > 200
+      item.srcset?.length > 0 //&&
+      // !item.title.match(/flag|icon|logo|symbol|map|coa|coat/i) &&
+      // (item.original?.width || 0) > 200
     ).map(item => ({
       src:     item.srcset[item.srcset.length - 1]?.src || item.original?.source,
       caption: item.caption?.text || item.title.replace(/^File:/i, '').replace(/\.[^.]+$/, ''),

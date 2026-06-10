@@ -43,8 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* Gallery */
   const gallery      = document.getElementById('gallery');
-  const galleryInner = document.getElementById('gallery-inner');
   const galleryClose = document.getElementById('gallery-close');
+  // const galleryStage = document.getElementById('gallery-stage');
 
   /* Context menu */
   const contextMenu    = document.getElementById('context-menu');
@@ -148,17 +148,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     /* 4. Advance the data queue */
     await API.advance();
 
-    /* 5. Re-render all three slots with new queue positions,
-          then snap cards back to their CSS default positions
-          WITHOUT a transition (instant, user never sees it). */
+    /* 5. Kill transitions FIRST, wait two frames to guarantee the
+          browser has painted transition:none before we move anything,
+          then re-render and snap positions — user never sees the snap. */
     setTransitions(false);
+
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
     renderCurrent();
     renderAdjacent();
     cardCurrent.style.transform = '';
     cardNext.style.transform    = '';
     cardPrev.style.transform    = '';
 
-    /* Small rAF to ensure paint before re-enabling transitions */
+    /* One more frame before re-enabling transitions */
     requestAnimationFrame(() => {
       setTransitions(true);
       isAnimating = false;
@@ -179,6 +182,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     API.retreat();
 
     setTransitions(false);
+
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
     renderCurrent();
     renderAdjacent();
     cardCurrent.style.transform = '';
@@ -387,45 +393,182 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /* ══════════════════════════════════════════════════════
-     GALLERY
+     GALLERY — full-screen carousel
   ══════════════════════════════════════════════════════ */
+
+  const galleryTrack   = document.getElementById('gallery-track');
+  const galleryCounter = document.getElementById('gallery-counter');
+  const galleryCaption = document.getElementById('gallery-caption');
+  const galleryDots    = document.getElementById('gallery-dots');
+  const galleryStage   = document.getElementById('gallery-stage');
+
+  let galleryImages  = [];   /* [{src, caption}] */
+  let galleryIndex   = 0;    /* current slide    */
+  let galleryOpen    = false;
+
+  /* Touch state for in-gallery horizontal swipe */
+  let gStartX = 0, gDragging = false, gDragX = 0;
 
   galleryClose.addEventListener('click', closeGallery);
 
-  async function openGallery() {
-    if (!currentArticle) return;
-    galleryInner.innerHTML = '<p style="color:rgba(247,245,240,0.3);text-align:center;padding:4rem 0;font-family:var(--f-sans);font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;">Loading images…</p>';
-    gallery.classList.replace('overlay--hidden', 'overlay--visible');
+  /* Touch on the stage for carousel swiping */
+  galleryStage.addEventListener('touchstart', e => {
+    gStartX   = e.touches[0].clientX;
+    gDragging = true;
+    gDragX    = 0;
+    galleryTrack.classList.add('gallery__track--dragging');
+  }, { passive: true });
 
+  galleryStage.addEventListener('touchmove', e => {
+    if (!gDragging) return;
+    gDragX = e.touches[0].clientX - gStartX;
+    const base = -galleryIndex * 100;
+    const drag = (gDragX / window.innerWidth) * 100;
+    galleryTrack.style.transform = `translateX(calc(${base}% + ${gDragX}px))`;
+  }, { passive: true });
+
+  galleryStage.addEventListener('touchend', () => {
+    if (!gDragging) return;
+    gDragging = false;
+    galleryTrack.classList.remove('gallery__track--dragging');
+
+    const threshold = window.innerWidth * 0.25;
+
+    if (gDragX < -threshold) {
+      /* Swiped left — next image or close if at end */
+      if (galleryIndex < galleryImages.length - 1) {
+        setGalleryIndex(galleryIndex + 1);
+      } else {
+        closeGallery();
+      }
+    } else if (gDragX > threshold) {
+      /* Swiped right — prev image or close if at start */
+      if (galleryIndex > 0) {
+        setGalleryIndex(galleryIndex - 1);
+      } else {
+        closeGallery();
+      }
+    } else {
+      /* Didn't reach threshold — snap back */
+      setGalleryIndex(galleryIndex);
+    }
+  }, { passive: true });
+
+  async function openGallery() {
+    if (!currentArticle || galleryOpen) return;
+    galleryOpen = true;
+    galleryIndex = 0;
+
+    /* Show gallery immediately in loading state */
+    gallery.classList.replace('overlay--hidden', 'overlay--visible');
+    galleryTrack.innerHTML  = '';
+    galleryDots.innerHTML   = '';
+    galleryCounter.textContent = '';
+    galleryCaption.textContent = '';
+    galleryTrack.innerHTML  = buildLoadingSlide();
+    console.log('Opening gallery for:', currentArticle.title);
     try {
       const images = await API.fetchImages(currentArticle.title);
+      galleryImages = images;
+      console.log('Fetched gallery images:', images);
       if (images.length === 0) {
-        const tpl = document.getElementById('tpl-no-images');
-        galleryInner.innerHTML = '';
-        galleryInner.appendChild(tpl.content.cloneNode(true));
+        showEmptyGallery();
         return;
       }
-      galleryInner.innerHTML = '';
-      images.forEach(img => {
-        const fig = document.createElement('figure');
-        const im  = document.createElement('img');
-        im.src     = img.src;
-        im.alt     = img.caption;
-        im.loading = 'lazy';
-        const cap = document.createElement('figcaption');
-        cap.textContent = img.caption;
-        fig.appendChild(im);
-        fig.appendChild(cap);
-        galleryInner.appendChild(fig);
-      });
+
+      buildGallerySlides(images);
+      setGalleryIndex(0);
+
     } catch {
-      galleryInner.innerHTML = '<p style="color:rgba(247,245,240,0.3);text-align:center;padding:4rem 0;font-family:var(--f-sans);font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;">Could not load images.</p>';
+      showEmptyGallery();
     }
   }
 
+  function buildLoadingSlide() {
+    return `<div class="gallery__slide">
+      <p style="color:rgba(247,245,240,0.25);font-family:var(--f-sans);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Loading images…</p>
+    </div>`;
+  }
+
+  function buildGallerySlides(images) {
+    galleryTrack.innerHTML = '';
+    galleryDots.innerHTML  = '';
+
+    images.forEach((img, i) => {
+      /* Slide */
+      const slide = document.createElement('div');
+      slide.className = 'gallery__slide';
+      const im = document.createElement('img');
+      im.alt     = img.caption || '';
+      im.loading = i === 0 ? 'eager' : 'lazy';
+      /* Use smaller srcset for first image, full for rest */
+      //if (src.startsWith('//')) img.src = 'https:' + src;
+      if (img.src.startsWith('//')) img.src = 'https:' + img.src;
+      im.src = img.src;
+      slide.appendChild(im);
+      galleryTrack.appendChild(slide);
+
+      /* Dot */
+      const dot = document.createElement('div');
+      dot.className = 'gallery__dot';
+      dot.dataset.index = i;
+      galleryDots.appendChild(dot);
+    });
+
+    /* Hide dots if only 1 image */
+    galleryDots.style.display = images.length <= 1 ? 'none' : '';
+  }
+
+  function setGalleryIndex(i) {
+    galleryIndex = Math.max(0, Math.min(i, galleryImages.length - 1));
+
+    /* Slide track */
+    galleryTrack.style.transform = `translateX(-${galleryIndex * 100}%)`;
+
+    /* Counter */
+    galleryCounter.textContent = galleryImages.length > 1
+      ? `${galleryIndex + 1} / ${galleryImages.length}`
+      : '';
+
+    /* Caption */
+    galleryCaption.textContent = galleryImages[galleryIndex]?.caption || '';
+
+    /* Dots */
+    galleryDots.querySelectorAll('.gallery__dot').forEach((d, idx) => {
+      d.classList.toggle('gallery__dot--active', idx === galleryIndex);
+    });
+  }
+
+  function showEmptyGallery() {
+    galleryTrack.innerHTML  = '';
+    galleryDots.innerHTML   = '';
+    galleryCounter.textContent = '';
+    galleryCaption.textContent = '';
+
+    const tpl = document.getElementById('tpl-no-images');
+    const empty = document.createElement('div');
+    empty.className = 'gallery__empty';
+    empty.appendChild(tpl.content.cloneNode(true));
+    /* Inject directly into gallery (not track) */
+    document.getElementById('gallery-stage').appendChild(empty);
+  }
+
   function closeGallery() {
+    if (!galleryOpen) return;
+    galleryOpen = false;
     gallery.classList.replace('overlay--visible', 'overlay--hidden');
-    setTimeout(() => { galleryInner.innerHTML = ''; }, 400);
+
+    /* Clean up after transition */
+    setTimeout(() => {
+      galleryTrack.innerHTML = '';
+      galleryDots.innerHTML  = '';
+      galleryCounter.textContent = '';
+      galleryCaption.textContent = '';
+      galleryImages = [];
+      /* Remove empty state if it was shown */
+      document.getElementById('gallery-stage')
+        .querySelector('.gallery__empty')?.remove();
+    }, 400);
   }
 
   /* ══════════════════════════════════════════════════════

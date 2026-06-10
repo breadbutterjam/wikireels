@@ -1,4 +1,4 @@
-/* api.js — Wikipedia fetch + 3-article prefetch queue */
+/* api.js — Wikipedia fetch + prefetch queue */
 
 const API = (() => {
 
@@ -7,42 +7,39 @@ const API = (() => {
   const HTML_TITLE     = t => `https://en.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(t)}`;
   const MEDIA_TITLE    = t => `https://en.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(t)}`;
 
-  /* ── Fetch a random article summary ── */
+  /* ── Fully random article ── */
   async function fetchRandom() {
     const res = await fetch(SUMMARY_RANDOM);
     if (!res.ok) throw new Error(`Summary fetch failed: ${res.status}`);
     return res.json();
-    /*
-      Returns shape:
-      {
-        title, displaytitle, description,
-        extract          — lead paragraph plain text
-        thumbnail?       — { source, width, height }
-        originalimage?   — { source }
-        content_urls.desktop.page  — canonical Wikipedia URL
-      }
-    */
   }
 
-  /* ── Fetch full article HTML for reader mode ── */
+  /* ── One article — category-aware if categories selected ── */
+  async function fetchOne() {
+    if (typeof Categories !== 'undefined' && Store.hasCategories()) {
+      try {
+        const article = await Categories.fetchFromSelected();
+        if (article) return article;
+      } catch {}
+    }
+    return fetchRandom();
+  }
+
+  /* ── Full article HTML for reader ── */
   async function fetchFullHTML(title) {
     const res = await fetch(HTML_TITLE(title));
     if (!res.ok) throw new Error(`HTML fetch failed: ${res.status}`);
     return res.text();
   }
 
-  /* ── Fetch image list for gallery ── */
+  /* ── Image list for gallery ── */
   async function fetchImages(title) {
     const res = await fetch(MEDIA_TITLE(title));
     if (!res.ok) return [];
     const data = await res.json();
-    console.log('Media data:', data);
-    /* Filter to actual images, exclude icons/logos/flags (small files) */
     return (data.items || []).filter(item =>
       item.type === 'image' &&
-      item.srcset?.length > 0 //&&
-      // !item.title.match(/flag|icon|logo|symbol|map|coa|coat/i) &&
-      // (item.original?.width || 0) > 200
+      item.srcset?.length > 0
     ).map(item => ({
       src:     item.srcset[item.srcset.length - 1]?.src || item.original?.source,
       caption: item.caption?.text || item.title.replace(/^File:/i, '').replace(/\.[^.]+$/, ''),
@@ -52,85 +49,76 @@ const API = (() => {
   }
 
   /* ── HTML preload cache ── */
-  const htmlCache = new Map(); /* title → html string */
+  const htmlCache = new Map();
 
   async function preloadHTML(title) {
     if (!title || htmlCache.has(title)) return;
     try {
       const html = await fetchFullHTML(title);
       htmlCache.set(title, html);
-    } catch { /* silent — reader will retry on demand */ }
+    } catch {}
   }
 
   function getCachedHTML(title) {
     return htmlCache.get(title) || null;
   }
-  /*    Always keeps [prev, current, next] loaded.
-     queue[0] = prev, queue[1] = current, queue[2] = next
-     On swipe forward: shift left, fetch new tail.
-     On swipe back:    unshift, discard tail.
+
+  /* ══════════════════════════════════════════════════════
+     PREFETCH QUEUE
+     queue[0]=prev  queue[1]=current  queue[2]=next
   ══════════════════════════════════════════════════════ */
 
-  const queue   = [];   /* resolved article objects */
-  const pending = [];   /* in-flight fetch promises  */
-
-  async function prime() {
-    const fetches = [fetchRandom(), fetchRandom(), fetchRandom()];
-    const results = await Promise.allSettled(fetches);
-    results.forEach(r => {
-      if (r.status === 'fulfilled') queue.push(r.value);
-    });
-    if (queue.length === 0) throw new Error('Could not load any articles');
-    while (queue.length < 3) queue.push(queue[0]);
-    /* Preload full HTML for the current article immediately */
-    preloadHTML(current()?.title);
-  }
+  const queue   = [];
+  const pending = [];
 
   function prefetchOne() {
-    /* Fire a fetch and push the promise; resolve later */
-    const p = fetchRandom().catch(() => fetchRandom()); /* one retry */
+    const p = fetchOne().catch(() => fetchOne());
     pending.push(p);
+  }
+
+  async function prime() {
+    const results = await Promise.allSettled([fetchOne(), fetchOne(), fetchOne()]);
+    results.forEach(r => { if (r.status === 'fulfilled') queue.push(r.value); });
+    if (queue.length === 0) throw new Error('Could not load any articles');
+    while (queue.length < 3) queue.push(queue[0]);
+    preloadHTML(current()?.title);
   }
 
   async function advance() {
     queue.shift();
     if (pending.length > 0) {
-      const next = await pending.shift();
-      queue.push(next);
+      queue.push(await pending.shift());
     } else {
-      queue.push(await fetchRandom());
+      queue.push(await fetchOne());
     }
     prefetchOne();
-    /* Preload full HTML for the new current article */
     preloadHTML(current()?.title);
   }
 
   function retreat() {
-    /* Called after swipe-down (previous article) — no new fetch needed,
-       we reconstruct by rotating: move tail to head as new "prev".
-       Since we never truly have a prev beyond 1 step, we just
-       reload a random as the new tail to keep the queue full. */
     const tail = queue.pop();
     queue.unshift(tail);
     prefetchOne();
   }
 
-  function current()  { return queue[1] || queue[0]; }
-  function next()     { return queue[2]; }
-  function prev()     { return queue[0]; }
+  /* Flush queue and reprime — called when categories change */
+  async function reset() {
+    queue.length   = 0;
+    pending.length = 0;
+    htmlCache.clear();
+    await prime();
+    prefetchOne();
+  }
+
+  function current() { return queue[1] || queue[0]; }
+  function next()    { return queue[2]; }
+  function prev()    { return queue[0]; }
 
   return {
-    prime,
-    prefetchOne,
-    advance,
-    retreat,
-    current,
-    next,
-    prev,
-    fetchFullHTML,
-    fetchImages,
-    getCachedHTML,
-    preloadHTML,
+    prime, prefetchOne, advance, retreat, reset,
+    current, next, prev,
+    fetchFullHTML, fetchImages,
+    getCachedHTML, preloadHTML,
   };
 
 })();

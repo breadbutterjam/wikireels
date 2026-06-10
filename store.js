@@ -3,10 +3,12 @@
 const Store = (() => {
 
   const K = {
-    saves:    'rh_saves',
-    likes:    'rh_likes',
-    dislikes: 'rh_dislikes',
-    history:  'rh_history',
+    saves:      'rh_saves',
+    likes:      'rh_likes',
+    dislikes:   'rh_dislikes',
+    history:    'rh_history',
+    categories: 'rh_categories',
+    onboarded:  'rh_onboarded',
   };
 
   const MAX_HISTORY = 200;
@@ -62,6 +64,15 @@ const Store = (() => {
       set(K.history, [slim(a), ...h].slice(0, MAX_HISTORY));
     },
     getHistory: () => get(K.history),
+
+    /* Categories */
+    setCategories: ids  => set(K.categories, ids),
+    getCategories: ()   => get(K.categories), /* returns [] if none */
+    hasCategories: ()   => get(K.categories).length > 0,
+
+    /* Onboarding */
+    setOnboarded:  ()   => { try { localStorage.setItem(K.onboarded, '1'); } catch {} },
+    isOnboarded:   ()   => { try { return !!localStorage.getItem(K.onboarded); } catch { return false; } },
 
   };
 

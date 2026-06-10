@@ -905,3 +905,272 @@ button {
   text-transform: uppercase;
   color: var(--c-ink-faint);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   CATEGORY PICKER
+═══════════════════════════════════════════════════════════ */
+
+.cat-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: var(--c-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  transition: opacity 400ms var(--ease-smooth), transform 400ms var(--ease-snap);
+}
+
+.cat-picker--hidden {
+  opacity: 0;
+  transform: translateY(24px);
+  pointer-events: none;
+}
+
+.cat-picker__inner {
+  width: 100%;
+  max-width: 480px;
+  padding: calc(var(--safe-top) + 3rem) var(--pad-x) calc(var(--safe-bottom) + 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Header */
+.cat-picker__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cat-picker__eyebrow {
+  font-family: var(--f-sans);
+  font-size: var(--fs-category);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+}
+
+.cat-picker__title {
+  font-family: var(--f-serif);
+  font-size: clamp(1.8rem, 7vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--c-ink);
+}
+
+.cat-picker__sub {
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  color: var(--c-ink-faint);
+  letter-spacing: 0.01em;
+  margin-top: 0.25rem;
+}
+
+/* Pill grid — wrapping flex */
+.cat-picker__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* Individual pill */
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--c-border-mid);
+  background: transparent;
+  color: var(--c-ink-muted);
+  font-family: var(--f-sans);
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-smooth),
+    color      var(--dur-fast) var(--ease-smooth),
+    border-color var(--dur-fast) var(--ease-smooth),
+    transform  var(--dur-fast) var(--ease-smooth);
+  /* Brutalist — no border radius */
+  border-radius: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cat-pill:active {
+  transform: scale(0.95);
+}
+
+.cat-pill--selected {
+  background: var(--c-ink);
+  color: var(--c-bg);
+  border-color: var(--c-ink);
+}
+
+.cat-pill__icon {
+  font-size: 1rem;
+  line-height: 1;
+  /* Prevent emoji from affecting line height */
+  display: inline-block;
+}
+
+.cat-pill__label {
+  line-height: 1;
+}
+
+/* Actions */
+.cat-picker__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+.cat-picker__start {
+  width: 100%;
+  padding: 1rem;
+  background: var(--c-ink);
+  color: var(--c-bg);
+  font-family: var(--f-sans);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  transition: opacity var(--dur-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.cat-picker__start:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.cat-picker__start:not(:disabled):active {
+  opacity: 0.8;
+}
+
+.cat-picker__arrow {
+  transition: transform var(--dur-fast) var(--ease-snap);
+}
+
+.cat-picker__start:not(:disabled):hover .cat-picker__arrow {
+  transform: translateX(4px);
+}
+
+.cat-picker__skip {
+  font-family: var(--f-sans);
+  font-size: 0.75rem;
+  color: var(--c-ink-faint);
+  letter-spacing: 0.04em;
+  padding: 0.25rem;
+  transition: color var(--dur-fast);
+  text-align: center;
+}
+
+.cat-picker__skip:active {
+  color: var(--c-ink-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP NAV ARROWS
+   Only visible on non-touch pointer devices (mouse/trackpad)
+═══════════════════════════════════════════════════════════ */
+
+.desktop-nav {
+  display: none; /* hidden by default — shown via media query below */
+  position: fixed;
+  bottom: calc(var(--safe-bottom) + 1.5rem);
+  left: var(--pad-x);
+  z-index: 10;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Only show on true pointer devices — hides on touch */
+@media (hover: hover) and (pointer: fine) {
+  .desktop-nav { display: flex; }
+}
+
+.desktop-nav__btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  color: var(--c-ink-faint);
+  border: 1px solid var(--c-border);
+  background: var(--c-bg);
+  transition:
+    color var(--dur-fast) var(--ease-smooth),
+    border-color var(--dur-fast) var(--ease-smooth),
+    transform var(--dur-fast) var(--ease-smooth);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.desktop-nav__btn:hover {
+  color: var(--c-ink);
+  border-color: var(--c-border-mid);
+}
+
+.desktop-nav__btn:active {
+  transform: scale(0.9);
+  color: var(--c-ink);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   READER — navigation stack styles
+═══════════════════════════════════════════════════════════ */
+
+/* Back button shows depth count when > 1 level deep */
+.card__back {
+  font-family: var(--f-sans);
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--c-ink-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem 0.25rem 0;
+  transition: color var(--dur-fast);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.card__back:active { color: var(--c-ink); }
+
+/* Loading state inside reader body */
+.reader-loading {
+  opacity: 0.35;
+  font-family: var(--f-sans);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2rem 0;
+}
+
+/* Links inside reader body — subtle underline, no colour shift */
+.card__reader-body a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--c-border-mid);
+  transition: border-color var(--dur-fast);
+  cursor: pointer;
+}
+
+.card__reader-body a:active {
+  border-color: var(--c-accent);
+}

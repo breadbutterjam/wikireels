@@ -195,10 +195,40 @@
     </div>
   </template>
 
-  <script src="app.js"></script>
-  <script src="api.js"></script>
-  <script src="store.js"></script>
-  <script src="gestures.js"></script>
+  <!-- ── DESKTOP NAV ARROWS (non-touch only) ───────────────── -->
+  <div id="desktop-nav" class="desktop-nav" aria-label="Article navigation">
+    <button class="desktop-nav__btn" id="desktop-prev" aria-label="Previous article">↑</button>
+    <button class="desktop-nav__btn" id="desktop-next" aria-label="Next article">↓</button>
+  </div>
 
-</body>
-</html>
+  <!-- ── CATEGORY PICKER ───────────────────────────────────── -->
+  <div id="category-picker" class="cat-picker" role="dialog" aria-modal="true" aria-label="Choose your interests">
+    <div class="cat-picker__inner">
+
+      <div class="cat-picker__header">
+        <p class="cat-picker__eyebrow">rabbit hole</p>
+        <h2 class="cat-picker__title">what are you<br>curious about?</h2>
+        <p class="cat-picker__sub">pick one or more to personalise your feed</p>
+      </div>
+
+      <div class="cat-picker__grid" id="cat-grid">
+        <!-- Pills injected by categories.js -->
+      </div>
+
+      <div class="cat-picker__actions">
+        <button class="cat-picker__start" id="cat-start" disabled>
+          start reading <span class="cat-picker__arrow">→</span>
+        </button>
+        <button class="cat-picker__skip" id="cat-skip">
+          skip, show me anything
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="store.js"></script>
+  <script src="categories.js"></script>
+  <script src="api.js"></script>
+  <script src="gestures.js"></script>
+  <script src="app.js"></script>

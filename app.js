@@ -44,36 +44,77 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* Gallery */
   const gallery      = document.getElementById('gallery');
   const galleryClose = document.getElementById('gallery-close');
-  // const galleryStage = document.getElementById('gallery-stage');
+  const galleryStage = document.getElementById('gallery-stage');
 
   /* Context menu */
   const contextMenu    = document.getElementById('context-menu');
   const contextOverlay = document.getElementById('context-overlay');
 
+  /* Category picker */
+  const catPicker = document.getElementById('category-picker');
+  const catGrid   = document.getElementById('cat-grid');
+  const catStart  = document.getElementById('cat-start');
+  const catSkip   = document.getElementById('cat-skip');
+
   /* ══════════════════════════════════════════════════════
      STATE
   ══════════════════════════════════════════════════════ */
 
-  let isAnimating = false;   /* block rapid swipes mid-transition   */
-  let isReaderOpen = false;  /* summary vs reader mode              */
-  let currentArticle = null; /* the live article object             */
+  let isAnimating  = false;
+  let isReaderOpen = false;
+  let currentArticle = null;
 
   /* ══════════════════════════════════════════════════════
-     BOOT — prime the queue, populate cards
+     CATEGORY PICKER — shown every load, dismissed to feed
   ══════════════════════════════════════════════════════ */
 
-  try {
-    await API.prime();
-    API.prefetchOne(); /* warm the pipeline immediately */
-  } catch (err) {
-    showToast('Could not load articles — check connection');
-    loader.classList.add('loader--hidden');
-    return;
+  let pickerSelected = [...Store.getCategories()]; /* start with saved selection */
+
+  Categories.renderPills(catGrid, pickerSelected, ids => {
+    pickerSelected = ids;
+    catStart.disabled = ids.length === 0;
+  });
+
+  /* Restore disabled state based on initial selection */
+  catStart.disabled = pickerSelected.length === 0;
+
+  catStart.addEventListener('click', async () => {
+    Store.setCategories(pickerSelected);
+    Store.setOnboarded();
+    await dismissPickerAndStart();
+  });
+
+  catSkip.addEventListener('click', async () => {
+    Store.setCategories([]);   /* empty = fully random */
+    Store.setOnboarded();
+    await dismissPickerAndStart();
+  });
+
+  async function dismissPickerAndStart() {
+    catPicker.classList.add('cat-picker--hidden');
+    /* Warm category pools in background */
+    Categories.warmPools();
+    /* Boot the feed behind the picker transition */
+    await bootFeed();
   }
 
-  renderCurrent();
-  renderAdjacent();
-  loader.classList.add('loader--hidden');
+  /* ══════════════════════════════════════════════════════
+     BOOT FEED
+  ══════════════════════════════════════════════════════ */
+
+  async function bootFeed() {
+    try {
+      await API.prime();
+      API.prefetchOne();
+    } catch (err) {
+      showToast('Could not load articles — check connection');
+      loader.classList.add('loader--hidden');
+      return;
+    }
+    renderCurrent();
+    renderAdjacent();
+    loader.classList.add('loader--hidden');
+  }
 
   /* ══════════════════════════════════════════════════════
      RENDER HELPERS
@@ -248,10 +289,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isReaderOpen) goPrev();
   });
 
-  Gestures.on('swipeLeft',  () => {
+  Gestures.on('swipeLeft', () => {
     if (isReaderOpen) return;
-    saveCurrentArticle();
-    flashSave();
+    /* swipe left removed from save — explicit button only.
+       Left edge reserved to avoid Safari back-gesture conflict. */
   });
 
   Gestures.on('swipeRight', () => {
@@ -264,49 +305,155 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /* ══════════════════════════════════════════════════════
-     READER MODE (Option B — mode swap)
+     READER MODE — with in-app link navigation stack
+     Stack stores {title, html} entries.
+     Back pops the stack. At depth 0, back exits reader.
   ══════════════════════════════════════════════════════ */
 
+  const NAV_STACK_MAX = 10;
+  let navStack = [];   /* [{title, scrollTop}] — current article always at tail */
+
   readMoreBtn.addEventListener('click', () => enterReader());
-  backBtn.addEventListener('click', () => exitReader());
+  backBtn.addEventListener('click', () => navigateBack());
 
-  async function enterReader() {
-    if (isReaderOpen || !currentArticle) return;
-    isReaderOpen = true;
+  async function enterReader(title = null) {
+    const articleTitle = title || currentArticle?.title;
+    if (!articleTitle) return;
 
-    readerTitleEl.textContent   = currentArticle.title;
-    readerTitleSmEl.textContent = currentArticle.title;
-    readerCatEl.textContent     = currentArticle.description || '';
-    readerEl.scrollTop          = 0;
+    if (!isReaderOpen) {
+      /* First entry — set up state */
+      isReaderOpen = true;
+      navStack = [];
+      cardCurrent.classList.add('card--reader');
+    }
 
-    /* Check cache first — likely already loaded */
-    const cached = API.getCachedHTML(currentArticle.title);
+    /* Push to stack */
+    navStack.push({ title: articleTitle, scrollTop: 0 });
+    updateReaderHeader(articleTitle);
+    readerEl.scrollTop = 0;
+
+    /* Try cache first */
+    const cached = title ? null : API.getCachedHTML(articleTitle);
     if (cached) {
       readerBodyEl.innerHTML = cleanHTML(cached);
-      cardCurrent.classList.add('card--reader');
+      attachReaderLinks();
+      return;
+    }
+
+    readerBodyEl.innerHTML = '<p class="reader-loading">Loading…</p>';
+
+    try {
+      const html = await (title
+        ? API.fetchFullHTML(articleTitle)
+        : API.fetchFullHTML(articleTitle));
+      readerBodyEl.innerHTML = cleanHTML(html);
+      attachReaderLinks();
+    } catch {
+      readerBodyEl.innerHTML = `<p>Could not load article. <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(articleTitle)}" target="_blank" rel="noopener">Open on Wikipedia →</a></p>`;
+    }
+  }
+
+  function updateReaderHeader(title) {
+    readerTitleEl.textContent   = title;
+    readerTitleSmEl.textContent = title;
+    /* Category only meaningful for the root article */
+    readerCatEl.textContent = navStack.length <= 1
+      ? (currentArticle?.description || '')
+      : '';
+
+    /* Back button label: show depth if > 1 */
+    backBtn.textContent = navStack.length > 1
+      ? `← back · ${navStack.length - 1}`
+      : '←';
+  }
+
+  function navigateBack() {
+    if (!isReaderOpen) return;
+
+    navStack.pop();
+
+    if (navStack.length === 0) {
+      /* Exit reader entirely */
+      exitReader();
     } else {
-      /* Not cached yet — show reader immediately with loading state */
-      readerBodyEl.innerHTML = '<p style="opacity:0.4;font-family:var(--f-sans);font-size:0.85rem;letter-spacing:0.05em;">Loading…</p>';
-      cardCurrent.classList.add('card--reader');
-      try {
-        const html = await API.fetchFullHTML(currentArticle.title);
-        readerBodyEl.innerHTML = cleanHTML(html);
-      } catch {
-        readerBodyEl.innerHTML = `<p>Could not load full article. <a href="${currentArticle.content_urls?.desktop?.page || '#'}" target="_blank" rel="noopener">Read on Wikipedia →</a></p>`;
-      }
+      /* Go back one level — re-fetch the previous article */
+      const prev = navStack[navStack.length - 1];
+      navStack.pop(); /* enterReader will re-push it */
+      enterReader(prev.title);
     }
   }
 
   function exitReader() {
-    if (!isReaderOpen) return;
     cardCurrent.classList.remove('card--reader');
     isReaderOpen = false;
+    navStack = [];
     setTimeout(() => {
       readerBodyEl.innerHTML      = '';
       readerTitleEl.textContent   = '';
       readerTitleSmEl.textContent = '';
+      readerCatEl.textContent     = '';
+      backBtn.textContent         = '←';
     }, 320);
   }
+
+  /* Single delegated listener on readerBodyEl — attached once,
+     handles all link clicks including dynamically loaded content.
+     Wikipedia HTML API uses relative hrefs: ./Title, ../wiki/Title,
+     /wiki/Title, and full https://en.wikipedia.org/wiki/Title      */
+  readerBodyEl.addEventListener('click', e => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const href = a.getAttribute('href') || '';
+
+    /* Extract Wikipedia article title from any href format */
+    const title = extractWikiTitle(href);
+
+    if (title) {
+      if (navStack.length >= NAV_STACK_MAX) {
+        showToast('Too deep — opening in Wikipedia');
+        window.open(`https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`, '_blank', 'noopener');
+        return;
+      }
+      /* Save scroll position of current level */
+      if (navStack.length > 0) {
+        navStack[navStack.length - 1].scrollTop = readerEl.scrollTop;
+      }
+      enterReader(title);
+      return;
+    }
+
+    /* Non-article link (external, file, special page) — new tab */
+    const fullHref = a.href || href;
+    if (fullHref && fullHref.startsWith('http')) {
+      window.open(fullHref, '_blank', 'noopener');
+    }
+  });
+
+  function extractWikiTitle(href) {
+    if (!href || href.startsWith('#')) return null;
+
+    /* Relative: ./Title_Here or ./Title_Here#Section */
+    const dotSlash = href.match(/^\.\/([^#?:]+)/);
+    if (dotSlash) return decodeURIComponent(dotSlash[1]).replace(/_/g, ' ');
+
+    /* /wiki/Title or https://en.wikipedia.org/wiki/Title */
+    const wikiPath = href.match(/\/wiki\/([^#?:]+)/);
+    if (wikiPath) {
+      /* Skip special namespaces: File:, Help:, Wikipedia:, etc. */
+      const raw = wikiPath[1];
+      if (raw.includes(':')) return null;
+      return decodeURIComponent(raw).replace(/_/g, ' ');
+    }
+
+    return null;
+  }
+
+  /* attachReaderLinks kept as no-op — delegation handles everything */
+  function attachReaderLinks() {}
 
   function cleanHTML(html) {
     const div = document.createElement('div');
@@ -317,7 +464,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       '.sistersitebox, .reflist, .mw-references-wrap, ' +
       '.mw-empty-elt, .noprint, style, script'
     ).forEach(el => el.remove());
-    /* Fix relative image paths */
     div.querySelectorAll('img').forEach(img => {
       const src = img.getAttribute('src') || '';
       if (src.startsWith('//')) img.src = 'https:' + src;
@@ -400,7 +546,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const galleryCounter = document.getElementById('gallery-counter');
   const galleryCaption = document.getElementById('gallery-caption');
   const galleryDots    = document.getElementById('gallery-dots');
-  const galleryStage   = document.getElementById('gallery-stage');
+  // const galleryStage   = document.getElementById('gallery-stage');
 
   let galleryImages  = [];   /* [{src, caption}] */
   let galleryIndex   = 0;    /* current slide    */
@@ -466,11 +612,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     galleryCounter.textContent = '';
     galleryCaption.textContent = '';
     galleryTrack.innerHTML  = buildLoadingSlide();
-    console.log('Opening gallery for:', currentArticle.title);
+
     try {
       const images = await API.fetchImages(currentArticle.title);
       galleryImages = images;
-      console.log('Fetched gallery images:', images);
+
       if (images.length === 0) {
         showEmptyGallery();
         return;
@@ -502,8 +648,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       im.alt     = img.caption || '';
       im.loading = i === 0 ? 'eager' : 'lazy';
       /* Use smaller srcset for first image, full for rest */
-      //if (src.startsWith('//')) img.src = 'https:' + src;
-      if (img.src.startsWith('//')) img.src = 'https:' + img.src;
       im.src = img.src;
       slide.appendChild(im);
       galleryTrack.appendChild(slide);
@@ -639,6 +783,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove('save-flash--visible'), 1800);
   }
+
+  /* ══════════════════════════════════════════════════════
+     DESKTOP NAV ARROWS (#3)
+     Only rendered on non-touch via CSS media query,
+     but wired here unconditionally — harmless on mobile.
+  ══════════════════════════════════════════════════════ */
+
+  document.getElementById('desktop-prev')
+    ?.addEventListener('click', () => { if (!isReaderOpen) goPrev(); });
+  document.getElementById('desktop-next')
+    ?.addEventListener('click', () => { if (!isReaderOpen) goNext(); });
+
+  /* Also support keyboard arrow keys on desktop */
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowDown' || e.key === 'j') { if (!isReaderOpen) goNext(); }
+    if (e.key === 'ArrowUp'   || e.key === 'k') { if (!isReaderOpen) goPrev(); }
+    if (e.key === 'Escape' && isReaderOpen)      { navigateBack(); }
+  });
 
   /* ══════════════════════════════════════════════════════
      UTILS

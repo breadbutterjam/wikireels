@@ -293,11 +293,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isReaderOpen) return;
     /* swipe left removed from save — explicit button only.
        Left edge reserved to avoid Safari back-gesture conflict. */
+       openGallery();
   });
 
   Gestures.on('swipeRight', () => {
     if (isReaderOpen) return;
-    openGallery();
+    // openGallery();
   });
 
   Gestures.on('doubleTap', ({ x, y }) => {
@@ -648,6 +649,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       im.alt     = img.caption || '';
       im.loading = i === 0 ? 'eager' : 'lazy';
       /* Use smaller srcset for first image, full for rest */
+      // if (src.startsWith('//')) img.src = 'https:' + src;
+      if (img.src.startsWith('//')) img.src = 'https:' + img.src;
       im.src = img.src;
       slide.appendChild(im);
       galleryTrack.appendChild(slide);

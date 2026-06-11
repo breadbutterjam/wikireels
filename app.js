@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* Action buttons */
   const btnLike    = document.getElementById('btn-like');
+  const btnGallery = document.getElementById('btn-gallery');
   const btnSave    = document.getElementById('btn-save');
   const btnProfile = document.getElementById('btn-profile');
 
@@ -297,7 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   Gestures.on('swipeRight', () => {
-    if (isReaderOpen) return;
+    if (isReaderOpen) return; /* in reader, horizontal swipes are for nav within links */
     // openGallery();
   });
 
@@ -557,6 +558,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let gStartX = 0, gDragging = false, gDragX = 0;
 
   galleryClose.addEventListener('click', closeGallery);
+  btnGallery.addEventListener('click', openGallery);
 
   /* Touch on the stage for carousel swiping */
   galleryStage.addEventListener('touchstart', e => {
@@ -649,7 +651,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       im.alt     = img.caption || '';
       im.loading = i === 0 ? 'eager' : 'lazy';
       /* Use smaller srcset for first image, full for rest */
-      // if (src.startsWith('//')) img.src = 'https:' + src;
       if (img.src.startsWith('//')) img.src = 'https:' + img.src;
       im.src = img.src;
       slide.appendChild(im);

@@ -107,6 +107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* Apply stored appearance prefs immediately */
   Settings.init();
 
+  /* Init search — navigate callback opens reader for selected result */
+  Search.init(title => enterReader(title));
+
   const splash      = document.getElementById('splash');
   const splashSpinner = document.getElementById('splash-spinner');
   const isFirstTime = !Store.isOnboarded();
@@ -349,7 +352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isReaderOpen) return;
     /* swipe left removed from save — explicit button only.
        Left edge reserved to avoid Safari back-gesture conflict. */
-       openGallery();
+    openGallery();
   });
 
   Gestures.on('swipeRight', () => {
@@ -603,7 +606,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const galleryCounter = document.getElementById('gallery-counter');
   const galleryCaption = document.getElementById('gallery-caption');
   const galleryDots    = document.getElementById('gallery-dots');
-  // const galleryStage   = document.getElementById('gallery-stage');
+  // const galleryStage = document.getElementById('gallery-stage'); /* declared at top of DOM refs */
 
   let galleryImages  = [];   /* [{src, caption}] */
   let galleryIndex   = 0;    /* current slide    */
@@ -713,8 +716,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const im = document.createElement('img');
       im.alt     = img.caption || '';
       im.loading = i === 0 ? 'eager' : 'lazy';
-      /* Use smaller srcset for first image, full for rest */
-      if (img.src.startsWith('//')) img.src = 'https:' + img.src;
+      if (img.src && img.src.startsWith('//')) img.src = 'https:' + img.src; /* clean up source */
       im.src = img.src;
       slide.appendChild(im);
       galleryTrack.appendChild(slide);

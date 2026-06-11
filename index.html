@@ -76,10 +76,11 @@
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
           </svg>
         </button>
-        <!-- Three-dots: not interested / share -->
-        <button class="action-btn" id="menu-current" aria-label="More options">
+        <!-- Search icon -->
+        <button class="action-btn" id="btn-search" aria-label="Search Wikipedia">
           <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.35-4.35"/>
           </svg>
         </button>
       </div>
@@ -170,6 +171,42 @@
     </button>
   </div>
   <div id="context-overlay" class="context-overlay context-overlay--hidden"></div>
+
+  <!-- ── SEARCH OVERLAY ───────────────────────────────────── -->
+  <div id="search-overlay" class="search-overlay search-overlay--hidden" role="dialog" aria-modal="true" aria-label="Search Wikipedia">
+
+    <div class="search-overlay__header">
+      <div class="search-box">
+        <svg class="search-box__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input class="search-box__input" id="search-input" type="search"
+          placeholder="Search Wikipedia…" autocomplete="off" autocorrect="off"
+          autocapitalize="off" spellcheck="false" enterkeyhint="search" />
+        <button class="search-box__clear" id="search-clear" aria-label="Clear" hidden>✕</button>
+      </div>
+      <button class="search-overlay__close" id="search-close" aria-label="Close search">cancel</button>
+    </div>
+
+    <!-- Recent searches — shown when input is empty -->
+    <div class="search-recent" id="search-recent">
+      <div class="search-recent__header">
+        <span class="search-section-label">Recent</span>
+        <button class="search-recent__clear" id="search-clear-history">clear all</button>
+      </div>
+      <ul class="search-list" id="search-recent-list" role="list"></ul>
+    </div>
+
+    <!-- Results — shown after typing -->
+    <div class="search-results" id="search-results" hidden>
+      <ul class="search-list" id="search-results-list" role="list"></ul>
+      <div class="search-results__loading" id="search-loading" hidden>
+        <div class="loader__ring"></div>
+      </div>
+      <p class="search-results__empty" id="search-empty" hidden>No results found.</p>
+    </div>
+
+  </div>
 
   <!-- ── NO IMAGES STATE (template) ────────────────────────── -->
   <template id="tpl-no-images">
@@ -350,6 +387,7 @@
   <script src="api.js"></script>
   <script src="gestures.js"></script>
   <script src="settings.js"></script>
+  <script src="search.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

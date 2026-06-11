@@ -66,18 +66,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentArticle = null;
 
   /* ══════════════════════════════════════════════════════
-     CATEGORY PICKER — shown every load, dismissed to feed
+     CATEGORY PICKER — first visit only
+     Return visits go straight to feed.
   ══════════════════════════════════════════════════════ */
 
-  let pickerSelected = [...Store.getCategories()]; /* start with saved selection */
+  let pickerSelected = [...Store.getCategories()];
 
-  Categories.renderPills(catGrid, pickerSelected, ids => {
-    pickerSelected = ids;
-    catStart.disabled = ids.length === 0;
-  });
-
-  /* Restore disabled state based on initial selection */
-  catStart.disabled = pickerSelected.length === 0;
+  if (Store.isOnboarded()) {
+    /* Return visit — hide picker immediately, boot feed after splash */
+    catPicker.classList.add('cat-picker--hidden');
+  } else {
+    /* First visit — render pills, wire buttons */
+    Categories.renderPills(catGrid, pickerSelected, ids => {
+      pickerSelected = ids;
+      catStart.disabled = ids.length === 0;
+    });
+    catStart.disabled = pickerSelected.length === 0;
+  }
 
   catStart.addEventListener('click', async () => {
     Store.setCategories(pickerSelected);
@@ -86,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   catSkip.addEventListener('click', async () => {
-    Store.setCategories([]);   /* empty = fully random */
+    Store.setCategories([]);
     Store.setOnboarded();
     await dismissPickerAndStart();
   });
@@ -106,20 +111,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const isFirstTime = !Store.isOnboarded();
   const splashDur   = isFirstTime ? 1800 : 900;
 
-  /* Fade splash out after delay */
   setTimeout(() => {
     splash?.classList.add('splash--hidden');
-    /* After splash fades, show onboarding on first visit */
     setTimeout(() => {
-      if (isFirstTime) Onboarding.show();
+      if (isFirstTime) {
+        /* First visit: show onboarding (category picker already visible) */
+        Onboarding.show();
+      } else {
+        /* Return visit: go straight to feed */
+        Categories.warmPools();
+        bootFeed();
+      }
     }, 520);
   }, splashDur);
 
-  /* Onboarding dismiss leads to category picker (already shown) */
   document.getElementById('onboarding-dismiss')
-    ?.addEventListener('click', () => {
-      Onboarding.dismiss();
-    });
+    ?.addEventListener('click', () => Onboarding.dismiss());
 
   async function dismissPickerAndStart() {
     catPicker.classList.add('cat-picker--hidden');
@@ -632,7 +639,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }, { passive: true });
 
   async function openGallery() {
-    if (!currentArticle || galleryOpen) return;
+    if (galleryOpen) return;
+
+    /* Use the currently visible article — top of navStack in reader
+       mode, otherwise the base card article */
+    const activeTitle = isReaderOpen && navStack.length > 0
+      ? navStack[navStack.length - 1].title
+      : currentArticle?.title;
+
+    if (!activeTitle) return;
     galleryOpen = true;
     galleryIndex = 0;
 
@@ -645,7 +660,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     galleryTrack.innerHTML  = buildLoadingSlide();
 
     try {
-      const images = await API.fetchImages(currentArticle.title);
+      const images = await API.fetchImages(activeTitle);
       galleryImages = images;
 
       if (images.length === 0) {

@@ -208,6 +208,115 @@
     <button class="desktop-nav__btn" id="desktop-next" aria-label="Next article">↓</button>
   </div>
 
+  <!-- ── SPLASH SCREEN ────────────────────────────────────── -->
+  <div id="splash" class="splash">
+    <p class="splash__wordmark">rabbit hole</p>
+    <p class="splash__tagline">wikipedia, one swipe at a time</p>
+  </div>
+
+  <!-- ── ONBOARDING MODAL ───────────────────────────────────── -->
+  <div id="onboarding" class="onboarding" role="dialog" aria-modal="true" aria-label="How to use Rabbit Hole">
+    <div class="onboarding__sheet">
+      <h2 class="onboarding__title">how it works</h2>
+
+      <div class="onboarding__gesture">
+        <span class="onboarding__arrow">↑↓</span>
+        <p class="onboarding__gesture-text"><strong>swipe up / down</strong> to move between articles</p>
+      </div>
+      <div class="onboarding__gesture">
+        <span class="onboarding__arrow">→</span>
+        <p class="onboarding__gesture-text"><strong>swipe right</strong> to view images from the article</p>
+      </div>
+      <div class="onboarding__gesture">
+        <span class="onboarding__arrow">↓↓</span>
+        <p class="onboarding__gesture-text"><strong>read more</strong> dives into the full article — tap any link to go deeper</p>
+      </div>
+      <div class="onboarding__gesture">
+        <span class="onboarding__arrow">💡</span>
+        <p class="onboarding__gesture-text"><strong>double tap or tap 💡</strong> to like — shapes what you see next</p>
+      </div>
+      <div class="onboarding__gesture">
+        <span class="onboarding__arrow">🔖</span>
+        <p class="onboarding__gesture-text"><strong>tap 🔖</strong> to save an article for later</p>
+      </div>
+      <div class="onboarding__gesture">
+        <span class="onboarding__arrow">···</span>
+        <p class="onboarding__gesture-text"><strong>tap ···</strong> to hide articles like this one</p>
+      </div>
+
+      <button class="onboarding__dismiss" id="onboarding-dismiss">got it, let's go</button>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS PANE ──────────────────────────────────────── -->
+  <div id="settings" class="settings overlay overlay--hidden" role="dialog" aria-modal="true" aria-label="Settings">
+
+    <div class="settings__header">
+      <button class="settings__close" id="settings-close" aria-label="Close settings">←</button>
+      <span class="settings__title">settings</span>
+    </div>
+
+    <div class="settings__body">
+
+      <!-- Categories -->
+      <section class="settings__section">
+        <h3 class="settings__section-title">interests</h3>
+        <p class="settings__section-sub">your feed pulls from these topics</p>
+        <div class="cat-picker__grid" id="settings-cat-grid"></div>
+        <button class="settings__save-cats" id="settings-save-cats">update feed</button>
+      </section>
+
+      <!-- Appearance -->
+      <section class="settings__section">
+        <h3 class="settings__section-title">appearance</h3>
+
+        <div class="settings__row">
+          <span class="settings__row-label">dark mode</span>
+          <label class="settings__toggle" aria-label="Toggle dark mode">
+            <input type="checkbox" id="toggle-dark" />
+            <span class="settings__toggle-track"></span>
+          </label>
+        </div>
+
+        <div class="settings__row">
+          <span class="settings__row-label">text size</span>
+          <div class="settings__font-size" id="font-size-control">
+            <button class="settings__font-btn" data-delta="-1" aria-label="Smaller text">A−</button>
+            <span class="settings__font-val" id="font-size-val">100%</span>
+            <button class="settings__font-btn" data-delta="1" aria-label="Larger text">A+</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data -->
+      <section class="settings__section">
+        <h3 class="settings__section-title">data</h3>
+
+        <div class="settings__row settings__row--stat">
+          <span class="settings__row-label">articles read</span>
+          <span class="settings__row-value" id="stat-read">—</span>
+        </div>
+        <div class="settings__row settings__row--stat">
+          <span class="settings__row-label">articles saved</span>
+          <span class="settings__row-value" id="stat-saved">—</span>
+        </div>
+        <div class="settings__row settings__row--stat">
+          <span class="settings__row-label">articles liked</span>
+          <span class="settings__row-value" id="stat-liked">—</span>
+        </div>
+
+        <button class="settings__danger" id="settings-reset">clear all data</button>
+      </section>
+
+      <!-- About -->
+      <section class="settings__section settings__section--about">
+        <p class="settings__about">rabbit hole · built on wikipedia</p>
+        <button class="settings__show-onboarding" id="settings-show-onboarding">show tutorial again</button>
+      </section>
+
+    </div>
+  </div>
+
   <!-- ── CATEGORY PICKER ───────────────────────────────────── -->
   <div id="category-picker" class="cat-picker" role="dialog" aria-modal="true" aria-label="Choose your interests">
     <div class="cat-picker__inner">
@@ -238,4 +347,7 @@
   <script src="categories.js"></script>
   <script src="api.js"></script>
   <script src="gestures.js"></script>
+  <script src="settings.js"></script>
   <script src="app.js"></script>
+</body>
+</html>

@@ -91,11 +91,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     await dismissPickerAndStart();
   });
 
+  /* ══════════════════════════════════════════════════════
+     BOOT SEQUENCE
+     1. Settings.init() — apply stored prefs immediately
+     2. Splash — show briefly, then fade
+     3. If first visit: show onboarding, then category picker
+     4. If return visit: category picker (or skip to feed)
+  ══════════════════════════════════════════════════════ */
+
+  /* Apply stored appearance prefs (dark mode, font size) immediately */
+  Settings.init();
+
+  const splash      = document.getElementById('splash');
+  const isFirstTime = !Store.isOnboarded();
+  const splashDur   = isFirstTime ? 1800 : 900;
+
+  /* Fade splash out after delay */
+  setTimeout(() => {
+    splash?.classList.add('splash--hidden');
+    /* After splash fades, show onboarding on first visit */
+    setTimeout(() => {
+      if (isFirstTime) Onboarding.show();
+    }, 520);
+  }, splashDur);
+
+  /* Onboarding dismiss leads to category picker (already shown) */
+  document.getElementById('onboarding-dismiss')
+    ?.addEventListener('click', () => {
+      Onboarding.dismiss();
+    });
+
   async function dismissPickerAndStart() {
     catPicker.classList.add('cat-picker--hidden');
-    /* Warm category pools in background */
     Categories.warmPools();
-    /* Boot the feed behind the picker transition */
     await bootFeed();
   }
 

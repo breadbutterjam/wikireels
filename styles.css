@@ -1174,3 +1174,400 @@ button {
 .card__reader-body a:active {
   border-color: var(--c-accent);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   SPLASH SCREEN
+═══════════════════════════════════════════════════════════ */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: var(--c-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  pointer-events: none;
+  transition: opacity 500ms var(--ease-smooth);
+}
+
+.splash--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash__wordmark {
+  font-family: var(--f-serif);
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--c-ink);
+}
+
+.splash__tagline {
+  font-family: var(--f-sans);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ONBOARDING MODAL
+═══════════════════════════════════════════════════════════ */
+
+.onboarding {
+  position: fixed;
+  inset: 0;
+  z-index: 450;
+  background: rgba(26, 25, 22, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms var(--ease-smooth);
+}
+
+.onboarding--visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.onboarding__sheet {
+  background: var(--c-bg);
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem var(--pad-x) calc(var(--safe-bottom) + 1.5rem);
+  border-top: 1px solid var(--c-border);
+}
+
+.onboarding__title {
+  font-family: var(--f-serif);
+  font-size: 1.4rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--c-ink);
+  margin-bottom: 1.25rem;
+}
+
+.onboarding__gesture {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.onboarding__gesture:last-of-type { border-bottom: none; }
+
+.onboarding__arrow {
+  font-size: 0.9rem;
+  color: var(--c-accent);
+  width: 2rem;
+  text-align: center;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+
+.onboarding__gesture-text {
+  font-family: var(--f-sans);
+  font-size: 0.82rem;
+  color: var(--c-ink-muted);
+  line-height: 1.5;
+}
+
+.onboarding__gesture-text strong {
+  font-weight: 500;
+  color: var(--c-ink);
+}
+
+.onboarding__dismiss {
+  display: block;
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.9rem;
+  border: 1px solid var(--c-border-mid);
+  background: transparent;
+  font-family: var(--f-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-ink-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.onboarding__dismiss:active {
+  background: var(--c-ink);
+  color: var(--c-bg);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SETTINGS PANE
+═══════════════════════════════════════════════════════════ */
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  z-index: 300;
+}
+
+.settings__header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: calc(var(--safe-top) + 1rem) var(--pad-x) 0.9rem;
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.settings__close {
+  font-family: var(--f-sans);
+  font-size: 1rem;
+  color: var(--c-ink-muted);
+  padding: 0.2rem 0.4rem 0.2rem 0;
+  line-height: 1;
+  transition: color var(--dur-fast);
+}
+
+.settings__close:active { color: var(--c-ink); }
+
+.settings__title {
+  font-family: var(--f-serif);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--c-ink-muted);
+}
+
+.settings__body {
+  flex: 1;
+  padding: 0 0 calc(var(--safe-bottom) + 2rem);
+}
+
+/* Section */
+.settings__section {
+  padding: 1.5rem var(--pad-x);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.settings__section:last-child { border-bottom: none; }
+
+.settings__section-title {
+  font-family: var(--f-sans);
+  font-size: var(--fs-category);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+  margin-bottom: 0.4rem;
+}
+
+.settings__section-sub {
+  font-family: var(--f-sans);
+  font-size: 0.75rem;
+  color: var(--c-ink-faint);
+  margin-bottom: 1rem;
+  letter-spacing: 0.01em;
+}
+
+/* Row — label + control */
+.settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.settings__row:last-of-type { border-bottom: none; }
+
+.settings__row--stat { cursor: default; }
+
+.settings__row-label {
+  font-family: var(--f-sans);
+  font-size: 0.85rem;
+  color: var(--c-ink);
+  letter-spacing: 0.01em;
+}
+
+.settings__row-value {
+  font-family: var(--f-sans);
+  font-size: 0.85rem;
+  color: var(--c-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Toggle switch */
+.settings__toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.settings__toggle input { display: none; }
+
+.settings__toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--c-border-mid);
+  border-radius: 0; /* brutalist */
+  transition: background var(--dur-fast);
+}
+
+.settings__toggle-track::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  top: 3px;
+  left: 3px;
+  background: var(--c-bg);
+  transition: transform var(--dur-fast) var(--ease-snap);
+}
+
+.settings__toggle input:checked + .settings__toggle-track {
+  background: var(--c-ink);
+}
+
+.settings__toggle input:checked + .settings__toggle-track::before {
+  transform: translateX(20px);
+}
+
+/* Font size control */
+.settings__font-size {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.settings__font-btn {
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--c-ink-muted);
+  border: 1px solid var(--c-border-mid);
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  background: transparent;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.settings__font-btn:active {
+  background: var(--c-ink);
+  color: var(--c-bg);
+}
+
+.settings__font-val {
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  color: var(--c-ink-muted);
+  min-width: 3rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Category grid inside settings — reuses cat-picker__grid */
+.settings .cat-picker__grid {
+  margin-bottom: 1rem;
+}
+
+/* Save categories button */
+.settings__save-cats {
+  display: block;
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid var(--c-border-mid);
+  background: transparent;
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-ink-muted);
+  cursor: pointer;
+  text-align: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
+  margin-top: 0.5rem;
+}
+
+.settings__save-cats:active {
+  background: var(--c-ink);
+  color: var(--c-bg);
+}
+
+/* Danger zone */
+.settings__danger {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(192, 57, 43, 0.3);
+  background: transparent;
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c0392b;
+  cursor: pointer;
+  text-align: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.settings__danger:active {
+  background: #c0392b;
+  color: white;
+}
+
+/* About section */
+.settings__section--about {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.settings__about {
+  font-family: var(--f-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+}
+
+.settings__show-onboarding {
+  font-family: var(--f-sans);
+  font-size: 0.75rem;
+  color: var(--c-ink-faint);
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--c-border-mid);
+  padding-bottom: 0.1rem;
+  cursor: pointer;
+  background: transparent;
+  transition: color var(--dur-fast);
+}
+
+.settings__show-onboarding:active { color: var(--c-ink); }
+
+/* ── Font scale application ── */
+/* Applied to reading surfaces only, not UI chrome */
+.card__body,
+.card__reader-body,
+.card__expanded-content {
+  font-size: calc(var(--fs-body) * var(--font-scale, 1));
+}

@@ -1214,6 +1214,23 @@ button {
   color: var(--c-ink-faint);
 }
 
+/* Spinner — hidden by default, shown only if loading takes too long */
+.splash__spinner {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--c-border-mid);
+  border-top-color: var(--c-ink-faint);
+  border-radius: 50%;
+  margin-top: 1.5rem;
+  opacity: 0;
+  transition: opacity 300ms var(--ease-smooth);
+  animation: spin 900ms linear infinite;
+}
+
+.splash__spinner--visible {
+  opacity: 1;
+}
+
 /* ═══════════════════════════════════════════════════════════
    ONBOARDING MODAL
 ═══════════════════════════════════════════════════════════ */

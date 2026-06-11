@@ -104,26 +104,45 @@ document.addEventListener('DOMContentLoaded', async () => {
      4. If return visit: category picker (or skip to feed)
   ══════════════════════════════════════════════════════ */
 
-  /* Apply stored appearance prefs (dark mode, font size) immediately */
+  /* Apply stored appearance prefs immediately */
   Settings.init();
 
   const splash      = document.getElementById('splash');
+  const splashSpinner = document.getElementById('splash-spinner');
   const isFirstTime = !Store.isOnboarded();
-  const splashDur   = isFirstTime ? 1800 : 900;
+  const MIN_SPLASH  = isFirstTime ? 1600 : 800;
 
-  setTimeout(() => {
+  /* ── Configurable: how long to wait before showing spinner ── */
+  const SPINNER_DELAY = 500; /* ms — increase/decrease to taste */
+
+  function hideSplash() {
     splash?.classList.add('splash--hidden');
+  }
+
+  if (isFirstTime) {
     setTimeout(() => {
-      if (isFirstTime) {
-        /* First visit: show onboarding (category picker already visible) */
-        Onboarding.show();
-      } else {
-        /* Return visit: go straight to feed */
-        Categories.warmPools();
-        bootFeed();
-      }
-    }, 520);
-  }, splashDur);
+      hideSplash();
+      setTimeout(() => Onboarding.show(), 500);
+    }, MIN_SPLASH);
+
+  } else {
+    const splashTimer = new Promise(r => setTimeout(r, MIN_SPLASH));
+
+    Categories.warmPools();
+    const feedReady = bootFeed();
+
+    /* Show spinner only if feed isn't ready within SPINNER_DELAY */
+    let spinnerTimer = setTimeout(() => {
+      splashSpinner?.classList.add('splash__spinner--visible');
+    }, SPINNER_DELAY);
+
+    Promise.all([splashTimer, feedReady]).then(() => {
+      clearTimeout(spinnerTimer);
+      /* If spinner was shown, fade it out before hiding splash */
+      splashSpinner?.classList.remove('splash__spinner--visible');
+      hideSplash();
+    });
+  }
 
   document.getElementById('onboarding-dismiss')
     ?.addEventListener('click', () => Onboarding.dismiss());
@@ -135,7 +154,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /* ══════════════════════════════════════════════════════
-     BOOT FEED
+     BOOT FEED — returns promise, resolves when first
+     articles are rendered and ready to show
   ══════════════════════════════════════════════════════ */
 
   async function bootFeed() {
@@ -144,12 +164,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       API.prefetchOne();
     } catch (err) {
       showToast('Could not load articles — check connection');
-      loader.classList.add('loader--hidden');
       return;
     }
     renderCurrent();
     renderAdjacent();
     loader.classList.add('loader--hidden');
+    /* Promise resolves here — caller (splash logic) can now reveal feed */
   }
 
   /* ══════════════════════════════════════════════════════

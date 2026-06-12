@@ -40,7 +40,7 @@
   --safe-left:   env(safe-area-inset-left, 0px);
   --safe-right:  env(safe-area-inset-right, 0px);
   --pad-x:       clamp(1.25rem, 5vw, 2.5rem);
-  --pad-top:     calc(var(--safe-top) + 1.5rem);
+  --pad-top:     calc(var(--safe-top) + 24px + 1rem); /* 24px top bar + breathing room */
 
   --ease-snap:   cubic-bezier(0.22, 1, 0.36, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
@@ -419,6 +419,9 @@ button {
   flex-direction: column;
   gap: 0.9rem;
   align-items: center;
+  /* No independent transform or opacity — travels with card exactly */
+  will-change: auto;
+  pointer-events: all;
 }
 
 .action-btn {
@@ -471,28 +474,6 @@ button {
   fill: var(--c-ink);
   color: var(--c-ink);
 }
-
-/* ── SETTINGS BUTTON (fixed top-right, inside card) ─────── */
-
-#btn-profile {
-  position: absolute;
-  top: var(--pad-top);
-  right: var(--pad-x);
-  z-index: 15;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--c-ink-faint);
-  transition: color var(--dur-fast);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-#btn-profile svg { width: 18px; height: 18px; }
-#btn-profile:active { color: var(--c-ink); }
 
 /* ── LOADER ──────────────────────────────────────────────── */
 
@@ -1647,7 +1628,7 @@ button {
   background: rgba(247, 245, 240, 0.08);
   border: 1px solid rgba(247, 245, 240, 0.12);
   padding: 0.6rem 0.75rem;
-  border-radius: 27px;
+  border-radius: 24px;
 }
 
 .search-box__icon {
@@ -1841,3 +1822,189 @@ button {
 }
 
 .search-list__remove:active { color: rgba(247, 245, 240, 0.6); }
+
+/* ═══════════════════════════════════════════════════════════
+   TOP CHROME BAR
+═══════════════════════════════════════════════════════════ */
+
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(24px + var(--safe-top));
+  padding-top: var(--safe-top);
+  z-index: 200;
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.top-bar__btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-ink-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--dur-fast);
+  flex-shrink: 0;
+}
+
+.top-bar__btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.top-bar__btn:active { color: var(--c-ink); }
+
+/* Push all cards down to clear the top bar */
+#feed {
+  padding-top: 24px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOTTOM PIP
+   Quarter-circle protruding from bottom-left corner
+═══════════════════════════════════════════════════════════ */
+
+/* Mode colour tokens */
+:root {
+  --pip-home:  #2563EB;
+  --pip-saved: #16A34A;
+  --pip-news:  #D97706;
+}
+
+.nav-pip {
+  position: fixed;
+  bottom: calc(var(--safe-bottom) - 14px); /* half-submerged */
+  left: -14px; /* half-submerged into left edge */
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  z-index: 180;
+  cursor: pointer;
+  border: none;
+  transition:
+    background-color 300ms var(--ease-smooth),
+    transform 200ms var(--ease-snap),
+    box-shadow 200ms var(--ease-smooth);
+  box-shadow: 2px -2px 8px rgba(0,0,0,0.18);
+}
+
+.nav-pip--home  { background: var(--pip-home); }
+.nav-pip--saved { background: var(--pip-saved); }
+.nav-pip--news  { background: var(--pip-news); }
+
+.nav-pip:active { transform: scale(0.88); }
+
+/* Pulse ring when menu is open */
+.nav-pip--open::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0.3;
+  animation: pip-pulse 1.2s ease-out infinite;
+}
+
+@keyframes pip-pulse {
+  0%   { transform: scale(1); opacity: 0.3; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FLOATING NAV MENU — liquid glass pill
+═══════════════════════════════════════════════════════════ */
+
+.nav-menu {
+  position: fixed;
+  bottom: calc(var(--safe-bottom) + 1.8rem);
+  left: 1rem;
+  z-index: 181;
+  display: flex;
+  flex-direction: row;
+  gap: 0.25rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 999px;
+
+  /* Liquid glass */
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.07),
+    0 10px 24px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  /* Show/hide */
+  transition:
+    opacity 220ms var(--ease-smooth),
+    transform 220ms var(--ease-snap);
+}
+
+.nav-menu--hidden {
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  pointer-events: none;
+}
+
+.nav-menu--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+/* Dark mode glass */
+body.dark .nav-menu {
+  background: rgba(28, 27, 25, 0.82);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    0 10px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.nav-menu__item {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(26, 25, 22, 0.4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast),
+    background var(--dur-fast),
+    transform var(--dur-fast);
+}
+
+body.dark .nav-menu__item {
+  color: rgba(237, 233, 224, 0.4);
+}
+
+.nav-menu__item svg {
+  width: 20px;
+  height: 20px;
+}
+
+.nav-menu__item:active {
+  transform: scale(0.88);
+}
+
+/* Active item takes mode colour */
+.nav-menu__item--active[data-mode="home"]  { color: var(--pip-home); }
+.nav-menu__item--active[data-mode="saved"] { color: var(--pip-saved); }
+.nav-menu__item--active[data-mode="news"]  { color: var(--pip-news); }

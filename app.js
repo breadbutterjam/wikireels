@@ -221,37 +221,35 @@ document.addEventListener('DOMContentLoaded', async () => {
      slot — content rotates, elements stay put.
   ══════════════════════════════════════════════════════ */
 
-  const DUR = 360; /* ms — must match CSS --dur-card */
+  const DUR = 360;
+
+  /* Actions div travels visually with card-current.
+     We mirror the card's transform on it so it slides
+     in/out in perfect sync, including during peek drag. */
+  const actionsEl = document.getElementById('actions');
+
+  function setActionsTransform(val) {
+    actionsEl.style.transform = val;
+  }
 
   async function goNext() {
     if (isAnimating) return;
     if (isReaderOpen) exitReader();
     isAnimating = true;
 
-    /* 1. Disable transitions so position resets are instant */
     setTransitions(false);
-
-    /* 2. Pre-position: next card already sits at translateY(100%).
-          Bring it just off the bottom edge with no transition so
-          the upcoming animated slide feels natural. (It's already
-          there via CSS, this is a no-op safety reset.) */
-
-    /* 3. Animate: current slides up off screen, next slides up into view.
-          Cards are already partially dragged — transition continues from
-          wherever the finger released. */
     setTransitions(true);
     cardCurrent.style.transform = 'translateY(-100%)';
     cardNext.style.transform    = 'translateY(0)';
+    /* Icons slide out with current card */
+    actionsEl.style.transition  = `transform ${DUR}ms cubic-bezier(0.22,1,0.36,1)`;
+    actionsEl.style.transform   = 'translateY(-100%)';
 
     await sleep(DUR);
-
-    /* 4. Advance the data queue */
     await API.advance();
 
-    /* 5. Kill transitions FIRST, wait two frames to guarantee the
-          browser has painted transition:none before we move anything,
-          then re-render and snap positions — user never sees the snap. */
     setTransitions(false);
+    actionsEl.style.transition = 'none';
 
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
@@ -260,10 +258,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     cardCurrent.style.transform = '';
     cardNext.style.transform    = '';
     cardPrev.style.transform    = '';
+    /* Snap icons back with card-current — no transition, invisible */
+    actionsEl.style.transform   = '';
 
-    /* One more frame before re-enabling transitions */
     requestAnimationFrame(() => {
       setTransitions(true);
+      actionsEl.style.transition = '';
       isAnimating = false;
     });
   }
@@ -276,12 +276,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTransitions(true);
     cardCurrent.style.transform = 'translateY(100%)';
     cardPrev.style.transform    = 'translateY(0)';
+    actionsEl.style.transition  = `transform ${DUR}ms cubic-bezier(0.22,1,0.36,1)`;
+    actionsEl.style.transform   = 'translateY(100%)';
 
     await sleep(DUR);
-
     API.retreat();
 
     setTransitions(false);
+    actionsEl.style.transition = 'none';
 
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
@@ -290,9 +292,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     cardCurrent.style.transform = '';
     cardNext.style.transform    = '';
     cardPrev.style.transform    = '';
+    actionsEl.style.transform   = '';
 
     requestAnimationFrame(() => {
       setTransitions(true);
+      actionsEl.style.transition = '';
       isAnimating = false;
     });
   }
@@ -310,15 +314,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   Gestures.on('drag', ({ dy }) => {
     if (isAnimating || isReaderOpen) return;
-    /* Disable CSS transition so drag follows finger instantly */
     setTransitions(false);
     cardCurrent.style.transform = `translateY(${dy}px)`;
+    actionsEl.style.transform   = `translateY(${dy}px)`;
+    actionsEl.style.transition  = 'none';
     if (dy < 0) {
-      /* Pulling up — peek next from below */
       cardNext.style.transform = `translateY(calc(100% + ${dy}px))`;
       cardPrev.style.transform = 'translateY(-100%)';
     } else {
-      /* Pulling down — peek prev from above */
       cardPrev.style.transform = `translateY(calc(-100% + ${dy}px))`;
       cardNext.style.transform = 'translateY(100%)';
     }
@@ -329,6 +332,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     cardCurrent.style.transform = '';
     cardNext.style.transform    = '';
     cardPrev.style.transform    = '';
+    actionsEl.style.transform   = '';
+    actionsEl.style.transition  = '';
   }
 
   Gestures.on('dragEnd',    () => { /* swipe committed — goNext/goPrev takes over */ });
@@ -341,10 +346,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   Gestures.init(feed);
 
   Gestures.on('swipeUp', () => {
+    if (typeof closeNavMenu === 'function') closeNavMenu();
     if (!isReaderOpen) goNext();
   });
 
   Gestures.on('swipeDown', () => {
+    if (typeof closeNavMenu === 'function') closeNavMenu();
     if (!isReaderOpen) goPrev();
   });
 
@@ -821,6 +828,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     contextMenu.classList.add('context-menu--hidden');
     contextOverlay.classList.add('context-overlay--hidden');
   }
+
+  /* ══════════════════════════════════════════════════════
+     BOTTOM PIP + FLOATING NAV
+  ══════════════════════════════════════════════════════ */
+
+  const navPip     = document.getElementById('nav-pip');
+  const navMenu    = document.getElementById('nav-menu');
+  const navHome    = document.getElementById('nav-home');
+  const navSaved   = document.getElementById('nav-saved');
+
+  /* Mode colours match CSS tokens */
+  const MODE_COLORS = { home: '--pip-home', saved: '--pip-saved', news: '--pip-news' };
+  let   currentMode    = 'home';
+  let   navMenuOpen    = false;
+  let   navDismissTimer = null;
+
+  const NAV_AUTO_DISMISS = 3000; /* ms — configurable */
+
+  function setMode(mode) {
+    currentMode = mode;
+    /* Update pip colour class */
+    navPip.className = `nav-pip nav-pip--${mode}`;
+    if (navMenuOpen) navPip.classList.add('nav-pip--open');
+    /* Update active item */
+    navMenu.querySelectorAll('.nav-menu__item').forEach(btn => {
+      btn.classList.toggle('nav-menu__item--active', btn.dataset.mode === mode);
+    });
+  }
+
+  function openNavMenu() {
+    navMenuOpen = true;
+    navMenu.classList.replace('nav-menu--hidden', 'nav-menu--visible');
+    navPip.classList.add('nav-pip--open');
+    scheduleNavDismiss();
+  }
+
+  function closeNavMenu() {
+    navMenuOpen = false;
+    navMenu.classList.replace('nav-menu--visible', 'nav-menu--hidden');
+    navPip.classList.remove('nav-pip--open');
+    clearTimeout(navDismissTimer);
+  }
+
+  function scheduleNavDismiss() {
+    clearTimeout(navDismissTimer);
+    navDismissTimer = setTimeout(closeNavMenu, NAV_AUTO_DISMISS);
+  }
+
+  navPip.addEventListener('click', () => {
+    if (navMenuOpen) closeNavMenu();
+    else openNavMenu();
+  });
+
+  /* Swipe up/down on feed closes nav — handled in gesture routing above */
+
+  /* Nav item: Home */
+  navHome.addEventListener('click', () => {
+    setMode('home');
+    closeNavMenu();
+    /* Already on home feed — nothing else needed until Today tab exists */
+  });
+
+  /* Nav item: Saved */
+  navSaved.addEventListener('click', () => {
+    setMode('saved');
+    closeNavMenu();
+    showToast('Saved articles — coming in Phase 3');
+  });
+
+  /* Keep menu open if user is interacting with it */
+  navMenu.addEventListener('pointerenter', () => clearTimeout(navDismissTimer));
+  navMenu.addEventListener('pointerleave', () => scheduleNavDismiss());
 
   /* ══════════════════════════════════════════════════════
      INJECT SPARKFLOAT KEYFRAME (used by double-tap burst)

@@ -1579,7 +1579,7 @@ button {
   position: fixed;
   inset: 0;
   z-index: 350;
-  background: rgba(17, 17, 16, 0.99);
+  background: rgba(17, 17, 16, 0.92);
   display: flex;
   flex-direction: column;
   transition: opacity 250ms var(--ease-smooth),
@@ -1628,7 +1628,6 @@ button {
   background: rgba(247, 245, 240, 0.08);
   border: 1px solid rgba(247, 245, 240, 0.12);
   padding: 0.6rem 0.75rem;
-  border-radius: 24px;
 }
 
 .search-box__icon {
@@ -1865,6 +1864,22 @@ button {
 
 .top-bar__btn:active { color: var(--c-ink); }
 
+.top-bar__label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--f-sans);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+  pointer-events: none;
+  transition: opacity 200ms;
+}
+
+.top-bar__label:empty { opacity: 0; }
+
 /* Push all cards down to clear the top bar */
 #feed {
   padding-top: 24px;
@@ -1877,9 +1892,10 @@ button {
 
 /* Mode colour tokens */
 :root {
-  --pip-home:  #2563EB;
-  --pip-saved: #16A34A;
-  --pip-news:  #D97706;
+  --pip-home:  #2563EB;  /* blue  */
+  --pip-news:  #EA580C;  /* orange */
+  --pip-today: #16A34A;  /* green */
+  --pip-saved: #7C3AED;  /* purple — reserved */
 }
 
 .nav-pip {
@@ -1900,8 +1916,8 @@ button {
 }
 
 .nav-pip--home  { background: var(--pip-home); }
-.nav-pip--saved { background: var(--pip-saved); }
 .nav-pip--news  { background: var(--pip-news); }
+.nav-pip--today { background: var(--pip-today); }
 
 .nav-pip:active { transform: scale(0.88); }
 
@@ -2006,5 +2022,262 @@ body.dark .nav-menu__item {
 
 /* Active item takes mode colour */
 .nav-menu__item--active[data-mode="home"]  { color: var(--pip-home); }
-.nav-menu__item--active[data-mode="saved"] { color: var(--pip-saved); }
 .nav-menu__item--active[data-mode="news"]  { color: var(--pip-news); }
+.nav-menu__item--active[data-mode="today"] { color: var(--pip-today); }
+
+/* ═══════════════════════════════════════════════════════════
+   TODAY FEED
+═══════════════════════════════════════════════════════════ */
+
+.today-feed {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-bg);
+  transition: opacity 300ms var(--ease-smooth),
+              transform 300ms var(--ease-snap);
+}
+
+.today-feed--hidden {
+  opacity: 0;
+  transform: translateX(100%);
+  pointer-events: none;
+}
+
+.today-feed--visible {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: all;
+}
+
+/* ── Header: date + pills ── */
+.today-header {
+  position: absolute;
+  top: calc(24px + var(--safe-top));
+  left: 0;
+  right: 0;
+  z-index: 6;
+  padding: 0.75rem var(--pad-x) 0.6rem;
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.today-header__date {
+  font-family: var(--f-sans);
+  font-size: var(--fs-category);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+}
+
+.today-header__pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.today-header__pills::-webkit-scrollbar { display: none; }
+
+.today-pill {
+  font-family: var(--f-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--c-border-mid);
+  background: transparent;
+  color: var(--c-ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-fast), color var(--dur-fast),
+              border-color var(--dur-fast);
+  flex-shrink: 0;
+}
+
+.today-pill--active {
+  background: var(--c-ink);
+  color: var(--c-bg);
+  border-color: var(--c-ink);
+}
+
+.today-pill--soon {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ── Card stack ── */
+.today-stack {
+  position: absolute;
+  top: calc(24px + var(--safe-top)); /* sits directly under top bar */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+/* Today cards reuse base card styles + small overrides */
+.today-card {
+  position: absolute;
+  inset: 0;
+  background: var(--c-bg);
+  overflow: hidden;
+  will-change: transform;
+}
+
+.today-card--current { transform: translateY(0);     z-index: 2; }
+.today-card--next    { transform: translateY(100%);  z-index: 1; }
+
+/* Summary within today card */
+.today-card__summary {
+  position: absolute;
+  inset: 0;
+  padding: 1.25rem var(--pad-x) 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 150ms var(--ease-smooth);
+  pointer-events: all;
+}
+
+.today-card--reader .today-card__summary {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Optional thumbnail on news card */
+.today-card__thumb {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.today-card__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Reader within today card */
+.today-card__reader {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 1.5rem var(--pad-x) calc(var(--safe-bottom) + 4rem);
+  font-family: var(--f-serif);
+  font-size: var(--fs-body);
+  font-weight: 300;
+  line-height: var(--lh-body);
+  color: var(--c-ink);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms var(--ease-smooth) 120ms;
+}
+
+.today-card--reader .today-card__reader {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.today-card__reader-title {
+  font-family: var(--f-serif);
+  font-size: clamp(1.4rem, 5vw, 1.9rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--c-ink);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.today-card__back {
+  font-family: var(--f-sans);
+  font-size: 0.85rem;
+  color: var(--c-ink-muted);
+  flex-shrink: 0;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: color var(--dur-fast);
+}
+
+.today-card__back:active { color: var(--c-ink); }
+
+.today-card__reader-body p  { margin-bottom: 1.1em; }
+.today-card__reader-body h2 { font-size: 1.15rem; font-weight: 500; margin: 1.8rem 0 0.6rem; }
+.today-card__reader-body a  {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--c-border-mid);
+}
+
+/* ── End of news card ── */
+.today-end {
+  position: absolute;
+  inset: 0;
+  z-index: 3; /* above stack cards and loader */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: var(--pad-x);
+  text-align: center;
+  background: var(--c-bg);
+}
+
+.today-end__dino {
+  width: 140px;
+  height: 140px;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.today-end__headline {
+  font-family: var(--f-serif);
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--c-ink);
+}
+
+.today-end__sub {
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  color: var(--c-ink-faint);
+  letter-spacing: 0.03em;
+  line-height: 1.55;
+  max-width: 22ch;
+}
+
+/* ── Loading state ── */
+.today-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Reuse loader ring */
+.today-loading .loader__ring {
+  width: 24px;
+  height: 24px;
+}

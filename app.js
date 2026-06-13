@@ -110,6 +110,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* Init search — navigate callback opens reader for selected result */
   Search.init(title => enterReader(title));
 
+  /* Init today feed */
+  Today.init();
+
   const splash      = document.getElementById('splash');
   const splashSpinner = document.getElementById('splash-spinner');
   const isFirstTime = !Store.isOnboarded();
@@ -347,11 +350,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   Gestures.on('swipeUp', () => {
     if (typeof closeNavMenu === 'function') closeNavMenu();
+    if (currentMode === 'news') { Today.handleSwipeUp(); return; }
     if (!isReaderOpen) goNext();
   });
 
   Gestures.on('swipeDown', () => {
     if (typeof closeNavMenu === 'function') closeNavMenu();
+    if (currentMode === 'news') { Today.handleSwipeDown(); return; }
     if (!isReaderOpen) goPrev();
   });
 
@@ -833,28 +838,28 @@ document.addEventListener('DOMContentLoaded', async () => {
      BOTTOM PIP + FLOATING NAV
   ══════════════════════════════════════════════════════ */
 
-  const navPip     = document.getElementById('nav-pip');
-  const navMenu    = document.getElementById('nav-menu');
-  const navHome    = document.getElementById('nav-home');
-  const navSaved   = document.getElementById('nav-saved');
+  const navPip      = document.getElementById('nav-pip');
+  const navMenu     = document.getElementById('nav-menu');
+  const navHome     = document.getElementById('nav-home');
+  const navNews     = document.getElementById('nav-news');
+  const navToday    = document.getElementById('nav-today');
+  const topBarLabel = document.getElementById('top-bar-label');
 
-  /* Mode colours match CSS tokens */
-  const MODE_COLORS = { home: '--pip-home', saved: '--pip-saved', news: '--pip-news' };
-  let   currentMode    = 'home';
-  let   navMenuOpen    = false;
+  const MODE_LABELS = { home: '', news: 'News', today: 'Today' };
+  let   currentMode     = 'home';
+  let   navMenuOpen     = false;
   let   navDismissTimer = null;
 
-  const NAV_AUTO_DISMISS = 3000; /* ms — configurable */
+  const NAV_AUTO_DISMISS = 3000;
 
   function setMode(mode) {
     currentMode = mode;
-    /* Update pip colour class */
     navPip.className = `nav-pip nav-pip--${mode}`;
     if (navMenuOpen) navPip.classList.add('nav-pip--open');
-    /* Update active item */
     navMenu.querySelectorAll('.nav-menu__item').forEach(btn => {
       btn.classList.toggle('nav-menu__item--active', btn.dataset.mode === mode);
     });
+    if (topBarLabel) topBarLabel.textContent = MODE_LABELS[mode] || '';
   }
 
   function openNavMenu() {
@@ -881,23 +886,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     else openNavMenu();
   });
 
-  /* Swipe up/down on feed closes nav — handled in gesture routing above */
-
-  /* Nav item: Home */
-  navHome.addEventListener('click', () => {
+  /* Nav: Home */
+  navHome?.addEventListener('click', () => {
     setMode('home');
     closeNavMenu();
-    /* Already on home feed — nothing else needed until Today tab exists */
+    Today.hide();
+    document.getElementById('feed').style.display = '';
   });
 
-  /* Nav item: Saved */
-  navSaved.addEventListener('click', () => {
-    setMode('saved');
+  /* Nav: News */
+  navNews?.addEventListener('click', () => {
+    setMode('news');
     closeNavMenu();
-    showToast('Saved articles — coming in Phase 3');
+    document.getElementById('feed').style.display = 'none';
+    Today.show();
   });
 
-  /* Keep menu open if user is interacting with it */
+  /* Nav: Today (date-based — On This Day / Featured / Picture) */
+  navToday?.addEventListener('click', () => {
+    setMode('today');
+    closeNavMenu();
+    showToast('On This Day — coming soon');
+  });
+
   navMenu.addEventListener('pointerenter', () => clearTimeout(navDismissTimer));
   navMenu.addEventListener('pointerleave', () => scheduleNavDismiss());
 

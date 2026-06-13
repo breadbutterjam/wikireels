@@ -1,9 +1,12 @@
-/* today.js — News feed + date-based feed (On This Day, Featured, Picture) */
+/* today.js — News feed with date navigation */
 
 const Today = (() => {
 
   const FEATURED_API = (y, m, d) =>
     `https://en.wikipedia.org/api/rest_v1/feed/featured/${y}/${m}/${d}`;
+
+  const MAX_DAYS_BACK = 30; /* how far back user can browse */
+  const DUR = 360;
 
   /* ── State ── */
   let newsItems   = [];
@@ -11,59 +14,104 @@ const Today = (() => {
   let isAnimating = false;
   let isLoaded    = false;
   let readerOpen  = false;
+  let activeDate  = null; /* Date object for currently loaded day */
 
   /* ── DOM refs ── */
-  let stack, loadingEl, endEl;
+  let stack, loadingEl, endEl, datePrevBtn, dateNextBtn, dateLabelEl;
 
   const pad = n => String(n).padStart(2, '0');
 
-  /* ── Truncate extract to summary length ── */
-  function summarise(text, maxChars = 320) {
-    if (!text || text.length <= maxChars) return text;
-    const cut = text.slice(0, maxChars);
-    const lastSpace = cut.lastIndexOf(' ');
-    return cut.slice(0, lastSpace) + '…';
+  function isToday(date) {
+    const now = new Date();
+    return date.toDateString() === now.toDateString();
   }
 
-  /* ── Fetch & process ── */
-  async function load() {
-    if (isLoaded) return;
+  function formatDateLabel(date) {
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  }
 
-    const now = new Date();
-    loadingEl.hidden = false;
+  function addDays(date, n) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+
+  /* ── Truncate extract ── */
+  function summarise(text, max = 300) {
+    if (!text || text.length <= max) return text;
+    const cut = text.slice(0, max);
+    return cut.slice(0, cut.lastIndexOf(' ')) + '…';
+  }
+
+  /* ── Show / hide end card (with display toggle fix) ── */
+  function showEnd(headline, sub) {
+    loadingEl.hidden = true;
+    loadingEl.style.display = 'none';
+    endEl.hidden = false;
+    endEl.style.display = '';
+    updateDatePicker();
+    if (headline) endEl.querySelector('.today-end__headline').textContent = headline;
+    if (sub)      endEl.querySelector('.today-end__sub').textContent      = sub;
+  }
+
+  function hideEnd() {
     endEl.hidden = true;
     endEl.style.display = 'none';
-    
-    stack.innerHTML = '';
+  }
 
-    const y = now.getFullYear();
-    const m = pad(now.getMonth() + 1);
-    const d = pad(now.getDate());
+  /* ── Update date picker state ── */
+  function updateDatePicker() {
+    if (!activeDate) return;
+    dateLabelEl.textContent = formatDateLabel(activeDate);
+
+    /* Next disabled if on today */
+    dateNextBtn.disabled = isToday(activeDate);
+    dateNextBtn.style.opacity = isToday(activeDate) ? '0.25' : '';
+
+    /* Prev disabled if at max lookback */
+    const minDate = addDays(new Date(), -MAX_DAYS_BACK);
+    datePrevBtn.disabled = activeDate <= minDate;
+    datePrevBtn.style.opacity = activeDate <= minDate ? '0.25' : '';
+  }
+
+  /* ── Fetch and load news for a given date ── */
+  async function loadDate(date) {
+    isLoaded    = false;
+    newsItems   = [];
+    currentIdx  = 0;
+    activeDate  = date;
+    isAnimating = false;
+
+    /* Clear stack and hide end card */
+    stack.innerHTML = '';
+    hideEnd();
+
+    loadingEl.hidden = false;
+    loadingEl.style.display = '';
+
+    const y = date.getFullYear();
+    const m = pad(date.getMonth() + 1);
+    const d = pad(date.getDate());
 
     let data;
     try {
       const res = await fetch(FEATURED_API(y, m, d));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       data = await res.json();
-    } catch (err) {
+    } catch {
       loadingEl.hidden = true;
+      loadingEl.style.display = 'none';
       showEnd('Could not load news.', 'Check your connection and try again.');
       return;
     }
 
-    /* Wikipedia news items — each has story (HTML) + links[] */
-    const raw = (data.news || []);
-
-    newsItems = [];
-    for (const item of raw) {
-      /* Strip HTML from story to get plain text */
+    for (const item of (data.news || [])) {
       const tmp = document.createElement('div');
       tmp.innerHTML = item.story || '';
       const story = tmp.textContent.trim();
       if (!story) continue;
 
-      /* Use first link as primary article, fall back gracefully */
-      const link = (item.links || [])[0] || {};
+      const link  = (item.links || [])[0] || {};
       const title = link.title || 'In the News';
 
       newsItems.push({
@@ -78,19 +126,24 @@ const Today = (() => {
 
     isLoaded = true;
     loadingEl.hidden = true;
+    loadingEl.style.display = 'none';
 
     if (newsItems.length === 0) {
-      showEnd('No news today.', 'Check back later.');
+      showEnd('No news for this date.', 'Try a different day.');
       return;
     }
 
-    currentIdx = 0;
     renderCard(0, false);
     renderCard(1, true);
-    
   }
 
-  /* ── Render one card ── */
+  /* initial load — uses today's date */
+  async function load() {
+    if (isLoaded) return;
+    await loadDate(new Date());
+  }
+
+  /* ── Render one card into the stack ── */
   function renderCard(idx, isNext) {
     if (idx < 0 || idx >= newsItems.length) return;
     if (stack.querySelector(`[data-idx="${idx}"]`)) return;
@@ -100,7 +153,6 @@ const Today = (() => {
     card.className = `today-card ${isNext ? 'today-card--next' : 'today-card--current'}`;
     card.dataset.idx = idx;
 
-    /* ── Summary layer ── */
     const summary = document.createElement('div');
     summary.className = 'today-card__summary';
     summary.innerHTML = `
@@ -112,7 +164,7 @@ const Today = (() => {
       <div class="card__fade"></div>
       <button class="card__readmore">read more</button>
     `;
-    /* Thumbnail below title if available */
+
     if (item.thumbnail) {
       const thumb = document.createElement('div');
       thumb.className = 'today-card__thumb';
@@ -120,7 +172,6 @@ const Today = (() => {
       summary.insertBefore(thumb, summary.querySelector('.card__body'));
     }
 
-    /* ── Reader layer ── */
     const reader = document.createElement('div');
     reader.className = 'today-card__reader';
     reader.innerHTML = `
@@ -136,9 +187,10 @@ const Today = (() => {
     card.appendChild(reader);
     stack.appendChild(card);
 
-    /* Wire read more */
-    summary.querySelector('.card__readmore').addEventListener('click', () => enterCardReader(card, item));
-    reader.querySelector('.today-card__back-btn').addEventListener('click', () => exitCardReader(card));
+    summary.querySelector('.card__readmore')
+      .addEventListener('click', () => enterCardReader(card, item));
+    reader.querySelector('.today-card__back-btn')
+      .addEventListener('click', () => exitCardReader(card));
   }
 
   async function enterCardReader(card, item) {
@@ -147,7 +199,6 @@ const Today = (() => {
     const body = card.querySelector('.today-card__reader-body');
     body.innerHTML = '<p class="reader-loading">Loading…</p>';
     card.querySelector('.today-card__reader').scrollTop = 0;
-
     try {
       const html = await API.fetchFullHTML(item.title);
       body.innerHTML = cleanHTML(html);
@@ -162,24 +213,16 @@ const Today = (() => {
   }
 
   /* ── Navigation ── */
-  const DUR = 360;
-
   function goNext() {
-    /* Cycle back from end card — always allowed regardless of animation state */
-    if (!endEl.hidden) {
-      endEl.hidden = true;
-      endEl.style.display = 'none';
-      stack.innerHTML = '';
-      currentIdx = 0;
-      renderCard(0, false);
-      renderCard(1, true);
+    /* Cycle back from end card — always allowed */
+    if (!endEl.hidden || endEl.style.display !== 'none') {
+      loadDate(activeDate || new Date());
       return;
     }
 
     if (isAnimating || readerOpen) return;
 
     if (currentIdx >= newsItems.length - 1) {
-      /* Animate last card out then show end */
       const cur = stack.querySelector(`[data-idx="${currentIdx}"]`);
       if (cur) {
         isAnimating = true;
@@ -192,17 +235,16 @@ const Today = (() => {
 
     const from = currentIdx;
     currentIdx++;
-    const to = currentIdx;
-
-    renderCard(to, true);
-    renderCard(to + 1, true);
+    renderCard(currentIdx, true);
+    renderCard(currentIdx + 1, true);
 
     const curCard  = stack.querySelector(`[data-idx="${from}"]`);
-    const nextCard = stack.querySelector(`[data-idx="${to}"]`);
+    const nextCard = stack.querySelector(`[data-idx="${currentIdx}"]`);
     if (!curCard || !nextCard) return;
 
     isAnimating = true;
-    nextCard.style.transform = 'translateY(100%)';
+    nextCard.style.transition = 'none';
+    nextCard.style.transform  = 'translateY(100%)';
     nextCard.classList.remove('today-card--next');
     nextCard.classList.add('today-card--current');
 
@@ -220,10 +262,9 @@ const Today = (() => {
 
     const from = currentIdx;
     currentIdx--;
-    const to = currentIdx;
 
     const curCard  = stack.querySelector(`[data-idx="${from}"]`);
-    const prevCard = stack.querySelector(`[data-idx="${to}"]`);
+    const prevCard = stack.querySelector(`[data-idx="${currentIdx}"]`);
     if (!curCard || !prevCard) return;
 
     isAnimating = true;
@@ -241,19 +282,10 @@ const Today = (() => {
     });
   }
 
-  function showEnd(headline, sub) {
-    // console.log('showEnd', headline, sub);
-    loadingEl.hidden = true;
-    endEl.hidden = false;
-    endEl.style.display = '';
-    if (headline) endEl.querySelector('.today-end__headline').textContent = headline;
-    if (sub) endEl.querySelector('.today-end__sub').textContent = sub;
-  }
-
-  /* ── Gesture handlers called from app.js ── */
+  /* ── Gesture handlers ── */
   function handleSwipeUp()   { goNext(); }
   function handleSwipeDown() { goPrev(); }
-  function isReaderOpen()    { return readerOpen; }
+  function isReaderOpenFn()  { return readerOpen; }
 
   /* ── Utilities ── */
   function cleanHTML(html) {
@@ -277,23 +309,42 @@ const Today = (() => {
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  /* ── Show / hide ── */
+  /* ── Show / hide feed ── */
   function show() {
-    document.getElementById('today-feed').classList.replace('today-feed--hidden','today-feed--visible');
+    document.getElementById('today-feed')
+      .classList.replace('today-feed--hidden', 'today-feed--visible');
     if (!isLoaded) load();
   }
 
   function hide() {
-    document.getElementById('today-feed').classList.replace('today-feed--visible','today-feed--hidden');
+    document.getElementById('today-feed')
+      .classList.replace('today-feed--visible', 'today-feed--hidden');
   }
 
+  /* ── Init ── */
   function init() {
-    stack     = document.getElementById('today-stack');
-    loadingEl = document.getElementById('today-loading');
-    endEl     = document.getElementById('today-end');
+    stack       = document.getElementById('today-stack');
+    loadingEl   = document.getElementById('today-loading');
+    endEl       = document.getElementById('today-end');
+    datePrevBtn = document.getElementById('today-date-prev');
+    dateNextBtn = document.getElementById('today-date-next');
+    dateLabelEl = document.getElementById('today-date-label');
 
-    /* Wire touch on the whole today-feed container so swipes work
-       on the end card and loading state too, not just card stack */
+    /* Ensure end card starts hidden */
+    hideEnd();
+
+    /* Date picker buttons */
+    datePrevBtn?.addEventListener('click', () => {
+      if (!activeDate || datePrevBtn.disabled) return;
+      loadDate(addDays(activeDate, -1));
+    });
+
+    dateNextBtn?.addEventListener('click', () => {
+      if (!activeDate || dateNextBtn.disabled) return;
+      loadDate(addDays(activeDate, 1));
+    });
+
+    /* Touch on entire today-feed so swipes work everywhere */
     const feed = document.getElementById('today-feed');
     if (feed) {
       let sx = 0, sy = 0;
@@ -311,6 +362,10 @@ const Today = (() => {
     }
   }
 
-  return { init, show, hide, handleSwipeUp, handleSwipeDown, isReaderOpen };
+  return {
+    init, show, hide,
+    handleSwipeUp, handleSwipeDown,
+    isReaderOpen: isReaderOpenFn,
+  };
 
 })();

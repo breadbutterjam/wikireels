@@ -2281,3 +2281,53 @@ body.dark .nav-menu__item {
   width: 24px;
   height: 24px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   TODAY END CARD — DATE PICKER
+═══════════════════════════════════════════════════════════ */
+
+.today-end__datepicker {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--c-border);
+}
+
+.today-date__btn {
+  font-family: var(--f-sans);
+  font-size: 0.9rem;
+  color: var(--c-ink-muted);
+  background: none;
+  border: 1px solid var(--c-border-mid);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color var(--dur-fast), border-color var(--dur-fast),
+              background var(--dur-fast);
+  flex-shrink: 0;
+}
+
+.today-date__btn:not(:disabled):active {
+  background: var(--c-ink);
+  color: var(--c-bg);
+  border-color: var(--c-ink);
+}
+
+.today-date__btn:disabled {
+  cursor: default;
+}
+
+.today-date__label {
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-muted);
+  min-width: 7rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

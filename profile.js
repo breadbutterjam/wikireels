@@ -1,0 +1,352 @@
+/* profile.js — Profile overlay, badge engine, leaderboard */
+
+/* ══════════════════════════════════════════════════════
+   BADGE ENGINE
+══════════════════════════════════════════════════════ */
+
+const Badges = (() => {
+
+  const DEFS = [
+    { id: 'first_read',    icon: '📖', label: 'First Read',          desc: 'Read your first article',            check: () => Store.getHistory().length >= 1 },
+    { id: 'ten_reads',     icon: '🔟', label: 'Avid Reader',         desc: 'Read 10 articles',                   check: () => Store.getHistory().length >= 10 },
+    { id: 'century',       icon: '💯', label: 'Century',             desc: 'Read 100 articles',                  check: () => Store.getHistory().length >= 100 },
+    { id: 'first_save',    icon: '🔖', label: 'Bookmarked',          desc: 'Save your first article',            check: () => Store.getSaves().length >= 1 },
+    { id: 'curator',       icon: '🗂️', label: 'Curator',            desc: 'Save 25 articles',                   check: () => Store.getSaves().length >= 25 },
+    { id: 'first_like',    icon: '💡', label: 'Curious',             desc: 'Like your first article',            check: () => Store.getLikes().length >= 1 },
+    { id: 'opinionated',   icon: '🧠', label: 'Opinionated',         desc: 'Like 50 articles',                   check: () => Store.getLikes().length >= 50 },
+    { id: 'streak_3',      icon: '🔥', label: '3-Day Streak',        desc: 'Read on 3 consecutive days',         check: () => currentStreak() >= 3 },
+    { id: 'streak_7',      icon: '⚡', label: 'Week Warrior',        desc: 'Read on 7 consecutive days',         check: () => currentStreak() >= 7 },
+    { id: 'streak_30',     icon: '🏆', label: 'Obsessed',            desc: 'Read on 30 consecutive days',        check: () => currentStreak() >= 30 },
+    { id: 'rabbit_hole',   icon: '🐇', label: 'Down the Rabbit Hole',desc: 'Follow 5 links in one session',      check: () => (Store.getSessionDepth?.() || 0) >= 5 },
+    { id: 'newsreader',    icon: '📰', label: 'Newsreader',          desc: 'Read 10 news articles',              check: () => (Store.getNewsCount?.() || 0) >= 10 },
+    { id: 'historian',     icon: '🏛️', label: 'Historian',          desc: 'Read 10 On This Day articles',       check: () => (Store.getOTDCount?.() || 0) >= 10 },
+    { id: 'polymath',      icon: '🌐', label: 'Polymath',            desc: 'Like articles in 5+ categories',    check: () => likedCategories() >= 5 },
+  ];
+
+  const EARNED_KEY = 'rh_badges';
+
+  function getEarned() {
+    try { return JSON.parse(localStorage.getItem(EARNED_KEY) || '[]'); } catch { return []; }
+  }
+
+  function setEarned(ids) {
+    try { localStorage.setItem(EARNED_KEY, JSON.stringify(ids)); } catch {}
+  }
+
+  /* Check all badges and award newly earned ones */
+  function evaluate() {
+    const earned    = new Set(getEarned());
+    const newlyEarned = [];
+
+    DEFS.forEach(def => {
+      if (!earned.has(def.id) && def.check()) {
+        earned.add(def.id);
+        newlyEarned.push(def);
+      }
+    });
+
+    if (newlyEarned.length > 0) {
+      setEarned([...earned]);
+      newlyEarned.forEach(showBadgeToast);
+    }
+
+    return newlyEarned;
+  }
+
+  function earned() {
+    const ids = new Set(getEarned());
+    return DEFS.filter(d => ids.has(d.id));
+  }
+
+  function showBadgeToast(badge) {
+    const t = document.createElement('div');
+    t.className = 'badge-toast';
+    t.innerHTML = `<span class="badge-toast__icon">${badge.icon}</span>
+                   <span class="badge-toast__text">Badge unlocked: <strong>${badge.label}</strong></span>`;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('badge-toast--visible'));
+    setTimeout(() => {
+      t.classList.remove('badge-toast--visible');
+      setTimeout(() => t.remove(), 400);
+    }, 3000);
+  }
+
+  /* ── Streak calculation ── */
+  function currentStreak() {
+    const history = Store.getHistory();
+    if (history.length === 0) return 0;
+
+    const days = [...new Set(
+      history.map(h => new Date(h.savedAt).toDateString())
+    )].map(s => new Date(s)).sort((a, b) => b - a);
+
+    let streak = 1;
+    for (let i = 1; i < days.length; i++) {
+      const diff = (days[i-1] - days[i]) / (1000 * 60 * 60 * 24);
+      if (diff <= 1.5) streak++;
+      else break;
+    }
+    return streak;
+  }
+
+  function likedCategories() {
+    const likes = Store.getLikes();
+    const cats  = new Set(likes.map(a => a.description || '').filter(Boolean));
+    return cats.size;
+  }
+
+  return { evaluate, earned, currentStreak, DEFS };
+
+})();
+
+/* ══════════════════════════════════════════════════════
+   PROFILE OVERLAY
+══════════════════════════════════════════════════════ */
+
+const Profile = (() => {
+
+  function init() {
+    /* Open profile from settings icon — handled in settings.js.
+       Also wire close buttons. */
+    document.getElementById('profile-close')
+      ?.addEventListener('click', close);
+
+    document.getElementById('btn-google-signin')
+      ?.addEventListener('click', async () => {
+        try {
+          await Auth.signInWithGoogle();
+        } catch {
+          /* error already logged in auth.js */
+        }
+      });
+
+    document.getElementById('btn-signout')
+      ?.addEventListener('click', async () => {
+        await Auth.signOut();
+        close();
+      });
+
+    document.getElementById('btn-leaderboard')
+      ?.addEventListener('click', () => {
+        close();
+        Leaderboard.open();
+      });
+
+    /* React to auth state changes */
+    Auth.onChange(user => {
+      if (user) {
+        onSignedIn(user);
+      } else {
+        onGuest();
+      }
+    });
+  }
+
+  async function onSignedIn(user) {
+    /* Sync data */
+    await Sync.onSignIn(user.uid);
+    await Sync.updateLeaderboard();
+
+    /* Evaluate badges */
+    Badges.evaluate();
+  }
+
+  function onGuest() {
+    /* Nothing to sync — guest mode */
+  }
+
+  function open() {
+    const overlay = document.getElementById('profile-overlay');
+    overlay?.classList.replace('overlay--hidden', 'overlay--visible');
+    refresh();
+  }
+
+  function close() {
+    document.getElementById('profile-overlay')
+      ?.classList.replace('overlay--visible', 'overlay--hidden');
+  }
+
+  function refresh() {
+    const user = Auth.currentUser();
+
+    const guestEl = document.getElementById('profile-guest');
+    const userEl  = document.getElementById('profile-user');
+
+    if (user) {
+      guestEl?.classList.add('profile-section--hidden');
+      userEl?.classList.remove('profile-section--hidden');
+
+      /* Account info */
+      const photo = document.getElementById('profile-photo');
+      if (photo) {
+        photo.src = user.photoURL || '';
+        photo.style.display = user.photoURL ? '' : 'none';
+      }
+      const nameEl  = document.getElementById('profile-name');
+      const emailEl = document.getElementById('profile-email');
+      if (nameEl)  nameEl.textContent  = user.displayName || '';
+      if (emailEl) emailEl.textContent = user.email || '';
+
+      /* Stats */
+      const history = Store.getHistory();
+      const saves   = Store.getSaves();
+      const likes   = Store.getLikes();
+      const streak  = Badges.currentStreak();
+
+      setText('pstat-read',   history.length);
+      setText('pstat-saved',  saves.length);
+      setText('pstat-liked',  likes.length);
+      setText('pstat-streak', streak);
+
+      /* Badges */
+      renderBadges();
+
+      /* Saved articles */
+      renderSaves(saves);
+
+    } else {
+      guestEl?.classList.remove('profile-section--hidden');
+      userEl?.classList.add('profile-section--hidden');
+    }
+  }
+
+  function renderBadges() {
+    const container = document.getElementById('profile-badges');
+    if (!container) return;
+
+    const earnedIds = new Set(Badges.earned().map(b => b.id));
+    container.innerHTML = '';
+
+    Badges.DEFS.forEach(def => {
+      const el = document.createElement('div');
+      el.className = `profile-badge ${earnedIds.has(def.id) ? 'profile-badge--earned' : 'profile-badge--locked'}`;
+      el.title = `${def.label}: ${def.desc}`;
+      el.innerHTML = `
+        <span class="profile-badge__icon">${def.icon}</span>
+        <span class="profile-badge__label">${def.label}</span>
+      `;
+      container.appendChild(el);
+    });
+  }
+
+  function renderSaves(saves) {
+    const container = document.getElementById('profile-saves');
+    if (!container) return;
+
+    if (saves.length === 0) {
+      container.innerHTML = '<p class="profile-saves__empty">nothing saved yet.</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+    saves.slice(0, 30).forEach(article => {
+      const el = document.createElement('div');
+      el.className = 'profile-save-item';
+      el.innerHTML = `
+        ${article.thumbnail ? `<img class="profile-save-item__thumb" src="${article.thumbnail}" alt="" loading="lazy"/>` : '<div class="profile-save-item__thumb profile-save-item__thumb--empty"></div>'}
+        <div class="profile-save-item__text">
+          <p class="profile-save-item__title">${escHtml(article.title)}</p>
+          <p class="profile-save-item__desc">${escHtml((article.description || '').slice(0, 60))}</p>
+        </div>
+      `;
+      /* Tapping a saved article opens it in the reader */
+      el.addEventListener('click', () => {
+        close();
+        /* enterReader is on app.js scope — use a custom event */
+        document.dispatchEvent(new CustomEvent('rh:openArticle', { detail: { title: article.title } }));
+      });
+      container.appendChild(el);
+    });
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function escHtml(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  return { init, open, close, refresh };
+
+})();
+
+/* ══════════════════════════════════════════════════════
+   LEADERBOARD
+══════════════════════════════════════════════════════ */
+
+const Leaderboard = (() => {
+
+  let activeMetric = 'read';
+
+  function init() {
+    document.getElementById('leaderboard-close')
+      ?.addEventListener('click', close);
+
+    document.querySelectorAll('.leaderboard-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        activeMetric = tab.dataset.metric;
+        document.querySelectorAll('.leaderboard-tab').forEach(t =>
+          t.classList.toggle('leaderboard-tab--active', t === tab)
+        );
+        load(activeMetric);
+      });
+    });
+  }
+
+  function open() {
+    document.getElementById('leaderboard-overlay')
+      ?.classList.replace('overlay--hidden', 'overlay--visible');
+    load(activeMetric);
+  }
+
+  function close() {
+    document.getElementById('leaderboard-overlay')
+      ?.classList.replace('overlay--visible', 'overlay--hidden');
+  }
+
+  async function load(metric) {
+    const list = document.getElementById('leaderboard-list');
+    if (!list) return;
+    list.innerHTML = '<p class="leaderboard-loading">Loading…</p>';
+
+    const rows = await Sync.fetchLeaderboard(metric, 20);
+    const uid  = Auth.uid();
+
+    if (rows.length === 0) {
+      list.innerHTML = '<p class="leaderboard-empty">No scores yet — be the first!</p>';
+      return;
+    }
+
+    list.innerHTML = '';
+    rows.forEach(row => {
+      const isYou = row.uid === uid;
+      const el = document.createElement('div');
+      el.className = `leaderboard-row ${isYou ? 'leaderboard-row--you' : ''}`;
+      el.innerHTML = `
+        <span class="leaderboard-row__rank">${row.rank}</span>
+        ${row.photoURL ? `<img class="leaderboard-row__photo" src="${row.photoURL}" alt="" loading="lazy"/>` : '<div class="leaderboard-row__photo leaderboard-row__photo--empty"></div>'}
+        <span class="leaderboard-row__name">${escHtml(row.displayName || 'Anonymous')}${isYou ? ' <span class="leaderboard-row__you-tag">you</span>' : ''}</span>
+        <span class="leaderboard-row__val">${row[metric] ?? '—'}</span>
+      `;
+      list.appendChild(el);
+    });
+
+    /* Show your rank if not in top 20 */
+    const youEl = document.getElementById('leaderboard-you');
+    if (youEl) {
+      const youRow = rows.find(r => r.uid === uid);
+      youEl.hidden = !!youRow;
+    }
+  }
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  return { init, open, close };
+
+})();

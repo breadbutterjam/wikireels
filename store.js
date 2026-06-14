@@ -40,34 +40,41 @@ const Store = (() => {
   return {
 
     /* Saves */
-    save:      a     => upsert(K.saves, a),
-    unsave:    title => remove(K.saves, title),
+    save:      a     => { upsert(K.saves, a);  typeof Sync !== 'undefined' && Sync.write('saves', slim(a)); },
+    unsave:    title => { remove(K.saves, title); typeof Sync !== 'undefined' && Sync.remove('saves', title); },
     isSaved:   title => get(K.saves).some(a => a.title === title),
     getSaves:  ()    => get(K.saves),
 
     /* Likes */
-    like:      a     => upsert(K.likes, a),
-    unlike:    title => remove(K.likes, title),
+    like:      a     => { upsert(K.likes, a);  typeof Sync !== 'undefined' && Sync.write('likes', slim(a)); },
+    unlike:    title => { remove(K.likes, title); typeof Sync !== 'undefined' && Sync.remove('likes', title); },
     isLiked:   title => get(K.likes).some(a => a.title === title),
     getLikes:  ()    => get(K.likes),
 
-    /* Dislikes (topic suppression seeds) */
+    /* Dislikes */
     dislike:      title => {
       const d = get(K.dislikes);
-      if (!d.includes(title)) set(K.dislikes, [title, ...d].slice(0, 500));
+      if (!d.includes(title)) {
+        set(K.dislikes, [title, ...d].slice(0, 500));
+        typeof Sync !== 'undefined' && Sync.write('dislikes', { title, savedAt: Date.now() });
+      }
     },
     getDislikes: () => get(K.dislikes),
 
     /* Read history */
     addHistory: a => {
       const h = get(K.history).filter(x => x.title !== a.title);
-      set(K.history, [slim(a), ...h].slice(0, MAX_HISTORY));
+      const entry = slim(a);
+      set(K.history, [entry, ...h].slice(0, MAX_HISTORY));
+      typeof Sync !== 'undefined' && Sync.write('history', entry);
+      /* Evaluate badges on each read */
+      typeof Badges !== 'undefined' && setTimeout(() => Badges.evaluate(), 100);
     },
     getHistory: () => get(K.history),
 
     /* Categories */
     setCategories: ids  => set(K.categories, ids),
-    getCategories: ()   => get(K.categories), /* returns [] if none */
+    getCategories: ()   => get(K.categories),
     hasCategories: ()   => get(K.categories).length > 0,
 
     /* Onboarding */

@@ -107,8 +107,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* Apply stored appearance prefs immediately */
   Settings.init();
 
+  /* Init auth, profile, leaderboard */
+  Auth.init();
+  Profile.init();
+  Leaderboard.init();
+
   /* Init search — navigate callback opens reader for selected result */
   Search.init(title => enterReader(title));
+
+  /* Listen for profile article-open events */
+  document.addEventListener('rh:openArticle', e => {
+    enterReader(e.detail.title);
+  });
 
   /* Init today feed */
   Today.init();

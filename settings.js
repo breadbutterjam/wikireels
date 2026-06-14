@@ -48,10 +48,13 @@ const Settings = (() => {
     const catGrid     = document.getElementById('settings-cat-grid');
     const profileBtn  = document.getElementById('btn-profile');
 
-    /* Open settings from profile icon */
-    profileBtn?.addEventListener('click', () => openSettings());
+    /* Open profile overlay from gear icon (not settings pane) */
+    profileBtn?.addEventListener('click', () => {
+      if (typeof Profile !== 'undefined') Profile.open();
+      else openSettings();
+    });
 
-    /* Close */
+    /* Close settings */
     closeBtn?.addEventListener('click', () => closeSettings());
 
     /* Dark mode toggle */

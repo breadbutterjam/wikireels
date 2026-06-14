@@ -134,12 +134,27 @@ const Profile = (() => {
 
     /* React to auth state changes */
     Auth.onChange(user => {
+      updateTopBarAvatar(user);
       if (user) {
         onSignedIn(user);
       } else {
         onGuest();
       }
     });
+  }
+
+  function updateTopBarAvatar(user) {
+    const img  = document.getElementById('top-bar-avatar');
+    const icon = document.getElementById('top-bar-avatar-icon');
+    if (!img || !icon) return;
+    if (user?.photoURL) {
+      img.src    = user.photoURL;
+      img.hidden = false;
+      icon.style.display = 'none';
+    } else {
+      img.hidden = true;
+      icon.style.display = '';
+    }
   }
 
   async function onSignedIn(user) {

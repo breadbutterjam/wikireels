@@ -46,13 +46,16 @@ const Settings = (() => {
     const resetBtn    = document.getElementById('settings-reset');
     const showOBBtn   = document.getElementById('settings-show-onboarding');
     const catGrid     = document.getElementById('settings-cat-grid');
-    const profileBtn  = document.getElementById('btn-profile');
 
-    /* Open profile overlay from gear icon (not settings pane) */
-    profileBtn?.addEventListener('click', () => {
-      if (typeof Profile !== 'undefined') Profile.open();
-      else openSettings();
-    });
+    /* Gear icon → settings pane */
+    document.getElementById('btn-settings')
+      ?.addEventListener('click', () => openSettings());
+
+    /* Profile icon → profile overlay */
+    document.getElementById('btn-profile')
+      ?.addEventListener('click', () => {
+        if (typeof Profile !== 'undefined') Profile.open();
+      });
 
     /* Close settings */
     closeBtn?.addEventListener('click', () => closeSettings());

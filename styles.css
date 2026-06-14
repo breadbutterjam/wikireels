@@ -1864,6 +1864,30 @@ button {
 
 .top-bar__btn:active { color: var(--c-ink); }
 
+.top-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+/* Avatar button — shows photo when signed in */
+.top-bar__avatar-btn {
+  position: relative;
+}
+
+.top-bar__avatar-img {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.top-bar__avatar-icon {
+  width: 16px;
+  height: 16px;
+}
+
 .top-bar__label {
   position: absolute;
   left: 50%;

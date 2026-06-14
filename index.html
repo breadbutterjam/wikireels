@@ -32,12 +32,24 @@
       </svg>
     </button>
     <span class="top-bar__label" id="top-bar-label"></span>
-    <button class="top-bar__btn" id="btn-profile" aria-label="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="2.8"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-    </button>
+    <div class="top-bar__right">
+      <!-- Gear → settings pane -->
+      <button class="top-bar__btn" id="btn-settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="2.8"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+      <!-- Profile avatar → profile overlay -->
+      <button class="top-bar__btn top-bar__avatar-btn" id="btn-profile" aria-label="Profile">
+        <!-- Shows photo when signed in, person icon when guest -->
+        <img class="top-bar__avatar-img" id="top-bar-avatar" src="" alt="" hidden/>
+        <svg class="top-bar__avatar-icon" id="top-bar-avatar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- ── BOTTOM PIP + FLOATING NAV ─────────────────────────── -->
@@ -609,57 +621,6 @@
        (the block Firebase gave you with the <script> tags
         and the firebaseConfig + initializeApp call)
   ══════════════════════════════════════════════════ -->
-  <!-- <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyDQRDGO-kC7twaH7aNtFGsmrOJI7yEkq2g",
-    authDomain: "wikireels-1eb73.firebaseapp.com",
-    projectId: "wikireels-1eb73",
-    storageBucket: "wikireels-1eb73.firebasestorage.app",
-    messagingSenderId: "1074310049117",
-    appId: "1:1074310049117:web:abd4238d72bb9c5d5c8cb4",
-    measurementId: "G-BDXH5864YW"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>   -->
-
-<!-- Firebase SDK — compat version (works with vanilla JS globals) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-<script>
-  // const firebaseConfig = {
-  //   apiKey: "your-actual-apiKey",
-  //   authDomain: "your-actual-authDomain",
-  //   projectId: "your-actual-projectId",
-  //   storageBucket: "your-actual-storageBucket",
-  //   messagingSenderId: "your-actual-messagingSenderId",
-  //   appId: "your-actual-appId"
-  // };
-  const firebaseConfig = {
-    apiKey: "AIzaSyDQRDGO-kC7twaH7aNtFGsmrOJI7yEkq2g",
-    authDomain: "wikireels-1eb73.firebaseapp.com",
-    projectId: "wikireels-1eb73",
-    storageBucket: "wikireels-1eb73.firebasestorage.app",
-    messagingSenderId: "1074310049117",
-    appId: "1:1074310049117:web:abd4238d72bb9c5d5c8cb4",
-    measurementId: "G-BDXH5864YW"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-</script>
-
 
   <script src="store.js"></script>
   <script src="categories.js"></script>

@@ -499,12 +499,56 @@
 
     <div class="profile-overlay__body">
 
-      <!-- Auth state: guest -->
-      <div id="profile-guest" class="profile-section">
-        <div class="profile-guest__copy">
-          <p class="profile-guest__headline">sign in to sync your reads</p>
-          <p class="profile-guest__sub">saves, likes and history follow you across devices.</p>
+      <!-- Account info: shown only when signed in -->
+      <div id="profile-account-section" class="profile-section--hidden">
+        <div class="profile-account">
+          <img class="profile-account__photo" id="profile-photo" src="" alt="" width="48" height="48"/>
+          <div class="profile-account__info">
+            <p class="profile-account__name" id="profile-name"></p>
+            <p class="profile-account__email" id="profile-email"></p>
+          </div>
         </div>
+      </div>
+
+      <!-- Stats: always shown -->
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <span class="profile-stat__val" id="pstat-read">—</span>
+          <span class="profile-stat__label">read</span>
+        </div>
+        <div class="profile-stat">
+          <span class="profile-stat__val" id="pstat-saved">—</span>
+          <span class="profile-stat__label">saved</span>
+        </div>
+        <div class="profile-stat">
+          <span class="profile-stat__val" id="pstat-liked">—</span>
+          <span class="profile-stat__label">liked</span>
+        </div>
+        <div class="profile-stat">
+          <span class="profile-stat__val" id="pstat-streak">—</span>
+          <span class="profile-stat__label">day streak</span>
+        </div>
+      </div>
+
+      <!-- Badges: always shown -->
+      <div class="profile-badges-section">
+        <p class="profile-section-label">badges</p>
+        <div class="profile-badges" id="profile-badges"></div>
+      </div>
+
+      <!-- Saved articles: always shown -->
+      <div class="profile-saves-section">
+        <div class="profile-saves-header">
+          <p class="profile-section-label">saved articles</p>
+          <button class="profile-leaderboard-link" id="btn-leaderboard">leaderboard →</button>
+        </div>
+        <div class="profile-saves" id="profile-saves">
+          <p class="profile-saves__empty">nothing saved yet.</p>
+        </div>
+      </div>
+
+      <!-- Sign-in nudge: shown only when guest (Option B — bottom) -->
+      <div id="profile-signin-strip" class="profile-signin-strip">
         <button class="profile-signin-btn" id="btn-google-signin">
           <svg class="profile-signin-btn__icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -514,60 +558,12 @@
           </svg>
           continue with google
         </button>
-        <p class="profile-guest__note">guest mode — data stored on this device only</p>
+        <p class="profile-signin-strip__note">Sign in to store your stats or stay ephemeral</p>
       </div>
 
-      <!-- Auth state: signed in -->
-      <div id="profile-user" class="profile-section profile-section--hidden">
-
-        <!-- Account info -->
-        <div class="profile-account">
-          <img class="profile-account__photo" id="profile-photo" src="" alt="" width="48" height="48"/>
-          <div class="profile-account__info">
-            <p class="profile-account__name" id="profile-name"></p>
-            <p class="profile-account__email" id="profile-email"></p>
-          </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="profile-stats">
-          <div class="profile-stat">
-            <span class="profile-stat__val" id="pstat-read">—</span>
-            <span class="profile-stat__label">read</span>
-          </div>
-          <div class="profile-stat">
-            <span class="profile-stat__val" id="pstat-saved">—</span>
-            <span class="profile-stat__label">saved</span>
-          </div>
-          <div class="profile-stat">
-            <span class="profile-stat__val" id="pstat-liked">—</span>
-            <span class="profile-stat__label">liked</span>
-          </div>
-          <div class="profile-stat">
-            <span class="profile-stat__val" id="pstat-streak">—</span>
-            <span class="profile-stat__label">day streak</span>
-          </div>
-        </div>
-
-        <!-- Badges -->
-        <div class="profile-badges-section">
-          <p class="profile-section-label">badges</p>
-          <div class="profile-badges" id="profile-badges"></div>
-        </div>
-
-        <!-- Saved articles -->
-        <div class="profile-saves-section">
-          <div class="profile-saves-header">
-            <p class="profile-section-label">saved articles</p>
-            <button class="profile-leaderboard-link" id="btn-leaderboard">leaderboard →</button>
-          </div>
-          <div class="profile-saves" id="profile-saves">
-            <p class="profile-saves__empty">nothing saved yet.</p>
-          </div>
-        </div>
-
+      <!-- Sign out: shown only when signed in -->
+      <div id="profile-signout-section" class="profile-section--hidden">
         <button class="profile-signout" id="btn-signout">sign out</button>
-
       </div>
 
     </div>

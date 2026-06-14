@@ -184,14 +184,16 @@ const Profile = (() => {
   function refresh() {
     const user = Auth.currentUser();
 
-    const guestEl = document.getElementById('profile-guest');
-    const userEl  = document.getElementById('profile-user');
+    /* Account section — signed in only */
+    const accountEl  = document.getElementById('profile-account-section');
+    const signinEl   = document.getElementById('profile-signin-strip');
+    const signoutEl  = document.getElementById('profile-signout-section');
 
     if (user) {
-      guestEl?.classList.add('profile-section--hidden');
-      userEl?.classList.remove('profile-section--hidden');
+      accountEl?.classList.remove('profile-section--hidden');
+      signinEl?.classList.add('profile-section--hidden');
+      signoutEl?.classList.remove('profile-section--hidden');
 
-      /* Account info */
       const photo = document.getElementById('profile-photo');
       if (photo) {
         photo.src = user.photoURL || '';
@@ -201,28 +203,29 @@ const Profile = (() => {
       const emailEl = document.getElementById('profile-email');
       if (nameEl)  nameEl.textContent  = user.displayName || '';
       if (emailEl) emailEl.textContent = user.email || '';
-
-      /* Stats */
-      const history = Store.getHistory();
-      const saves   = Store.getSaves();
-      const likes   = Store.getLikes();
-      const streak  = Badges.currentStreak();
-
-      setText('pstat-read',   history.length);
-      setText('pstat-saved',  saves.length);
-      setText('pstat-liked',  likes.length);
-      setText('pstat-streak', streak);
-
-      /* Badges */
-      renderBadges();
-
-      /* Saved articles */
-      renderSaves(saves);
-
     } else {
-      guestEl?.classList.remove('profile-section--hidden');
-      userEl?.classList.add('profile-section--hidden');
+      accountEl?.classList.add('profile-section--hidden');
+      signinEl?.classList.remove('profile-section--hidden');
+      signoutEl?.classList.add('profile-section--hidden');
     }
+
+    /* Stats — always, from localStorage */
+    const history = Store.getHistory();
+    const saves   = Store.getSaves();
+    const likes   = Store.getLikes();
+    const streak  = Badges.currentStreak();
+
+    setText('pstat-read',   history.length);
+    setText('pstat-saved',  saves.length);
+    setText('pstat-liked',  likes.length);
+    setText('pstat-streak', streak);
+
+    /* Badges — always */
+    Badges.evaluate();
+    renderBadges();
+
+    /* Saved articles — always */
+    renderSaves(saves);
   }
 
   function renderBadges() {

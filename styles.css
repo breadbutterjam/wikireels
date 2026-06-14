@@ -3049,3 +3049,22 @@ body.dark .nav-menu__item {
 }
 
 .badge-toast__text strong { font-weight: 500; }
+
+/* ── Profile sign-in strip (Option B — bottom of profile) ── */
+
+.profile-signin-strip {
+  padding: 1.5rem var(--pad-x) calc(var(--safe-bottom) + 1.5rem);
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-signin-strip__note {
+  font-family: var(--f-sans);
+  font-size: 0.72rem;
+  color: var(--c-ink-faint);
+  letter-spacing: 0.02em;
+  text-align: center;
+  line-height: 1.5;
+}

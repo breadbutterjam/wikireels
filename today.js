@@ -62,16 +62,26 @@ const Today = (() => {
   /* ── Update date picker state ── */
   function updateDatePicker() {
     if (!activeDate) return;
-    dateLabelEl.textContent = formatDateLabel(activeDate);
+    if (dateLabelEl) dateLabelEl.textContent = formatDateLabel(activeDate);
 
-    /* Next disabled if on today */
-    dateNextBtn.disabled = isToday(activeDate);
-    dateNextBtn.style.opacity = isToday(activeDate) ? '0.25' : '';
+    const today   = new Date();
+    const minDate = addDays(today, -MAX_DAYS_BACK);
 
-    /* Prev disabled if at max lookback */
-    const minDate = addDays(new Date(), -MAX_DAYS_BACK);
-    datePrevBtn.disabled = activeDate <= minDate;
-    datePrevBtn.style.opacity = activeDate <= minDate ? '0.25' : '';
+    if (dateNextBtn) {
+      dateNextBtn.disabled      = isToday(activeDate);
+      dateNextBtn.style.opacity = isToday(activeDate) ? '0.25' : '';
+    }
+    if (datePrevBtn) {
+      datePrevBtn.disabled      = activeDate <= minDate;
+      datePrevBtn.style.opacity = activeDate <= minDate ? '0.25' : '';
+    }
+
+    const dateInput = document.getElementById('today-date-input');
+    if (dateInput) {
+      dateInput.max   = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+      dateInput.min   = `${minDate.getFullYear()}-${pad(minDate.getMonth()+1)}-${pad(minDate.getDate())}`;
+      dateInput.value = `${activeDate.getFullYear()}-${pad(activeDate.getMonth()+1)}-${pad(activeDate.getDate())}`;
+    }
   }
 
   /* ── Fetch and load news for a given date ── */
@@ -214,8 +224,8 @@ const Today = (() => {
 
   /* ── Navigation ── */
   function goNext() {
-    /* Cycle back from end card — always allowed */
-    if (!endEl.hidden || endEl.style.display !== 'none') {
+    /* End card showing — reload same date (cycle back to first) */
+    if (endEl.style.display !== 'none') {
       loadDate(activeDate || new Date());
       return;
     }
@@ -229,7 +239,7 @@ const Today = (() => {
         cur.style.transition = `transform ${DUR}ms cubic-bezier(0.22,1,0.36,1)`;
         cur.style.transform  = 'translateY(-100%)';
         setTimeout(() => { isAnimating = false; showEnd(); }, DUR + 20);
-      } else { showEnd(); }
+      } else showEnd();
       return;
     }
 
@@ -258,7 +268,15 @@ const Today = (() => {
   }
 
   function goPrev() {
-    if (isAnimating || readerOpen || currentIdx === 0) return;
+    if (isAnimating || readerOpen) return;
+
+    /* At first item — wrap to last */
+    if (currentIdx === 0) {
+      stack.innerHTML = '';
+      currentIdx = newsItems.length - 1;
+      renderCard(currentIdx, false);
+      return;
+    }
 
     const from = currentIdx;
     currentIdx--;
@@ -326,14 +344,15 @@ const Today = (() => {
     stack       = document.getElementById('today-stack');
     loadingEl   = document.getElementById('today-loading');
     endEl       = document.getElementById('today-end');
-    datePrevBtn = document.getElementById('today-date-prev');
-    dateNextBtn = document.getElementById('today-date-next');
-    dateLabelEl = document.getElementById('today-date-label');
+    datePrevBtn  = document.getElementById('today-date-prev');
+    dateNextBtn  = document.getElementById('today-date-next');
+    dateLabelEl  = document.getElementById('today-date-label-btn');
+    const dateInput = document.getElementById('today-date-input');
 
     /* Ensure end card starts hidden */
     hideEnd();
 
-    /* Date picker buttons */
+    /* Date prev/next */
     datePrevBtn?.addEventListener('click', () => {
       if (!activeDate || datePrevBtn.disabled) return;
       loadDate(addDays(activeDate, -1));
@@ -342,6 +361,17 @@ const Today = (() => {
     dateNextBtn?.addEventListener('click', () => {
       if (!activeDate || dateNextBtn.disabled) return;
       loadDate(addDays(activeDate, 1));
+    });
+
+    /* Label tap → native calendar */
+    dateLabelEl?.addEventListener('click', () => {
+      dateInput?.showPicker?.();
+      dateInput?.click();
+    });
+
+    dateInput?.addEventListener('change', () => {
+      const [y, m, d] = dateInput.value.split('-').map(Number);
+      if (y && m && d) loadDate(new Date(y, m - 1, d));
     });
 
     /* Touch on entire today-feed so swipes work everywhere */

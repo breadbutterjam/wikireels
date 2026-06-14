@@ -161,60 +161,94 @@
 
   </div><!-- /#feed -->
 
-  <!-- ── TODAY FEED ────────────────────────────────────────── -->
+  <!-- ── TODAY FEED (News) ─────────────────────────────────── -->
   <div id="today-feed" class="today-feed today-feed--hidden">
-
-    <!-- News card stack -->
     <div class="today-stack" id="today-stack"></div>
-
-    <!-- End of news card -->
-    <div class="today-end" id="today-end" hidden>
+    <div class="today-end" id="today-end" hidden style="display:none">
       <svg class="today-end__dino" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Body -->
         <ellipse cx="85" cy="100" rx="35" ry="28" fill="#b5e0b5"/>
-        <!-- Head -->
         <ellipse cx="114" cy="78" rx="22" ry="18" fill="#b5e0b5"/>
-        <!-- Eye -->
         <circle cx="120" cy="73" r="3" fill="#2a2a2a"/>
         <circle cx="121" cy="72" r="1" fill="white"/>
-        <!-- Snout smile -->
         <path d="M108 82 Q114 87 120 82" stroke="#8cc88c" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        <!-- Spikes -->
         <polygon points="78,74 82,62 86,74" fill="#8cc88c"/>
         <polygon points="85,71 89,58 93,71" fill="#8cc88c"/>
         <polygon points="92,71 96,59 100,71" fill="#8cc88c"/>
-        <!-- Arm holding coffee -->
         <path d="M78 102 Q65 105 60 115" stroke="#8cc88c" stroke-width="5" stroke-linecap="round"/>
-        <!-- Coffee cup -->
         <rect x="44" y="110" width="22" height="18" rx="3" fill="#6b4c2a"/>
         <path d="M66 116 Q72 116 72 121 Q72 126 66 126" stroke="#6b4c2a" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <!-- Steam -->
         <path d="M50 108 Q52 103 50 98" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" fill="none"/>
         <path d="M56 107 Q58 101 56 96" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" fill="none"/>
         <path d="M62 108 Q64 103 62 98" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        <!-- Legs -->
         <path d="M68 124 L64 140" stroke="#8cc88c" stroke-width="5" stroke-linecap="round"/>
         <path d="M90 126 L92 142" stroke="#8cc88c" stroke-width="5" stroke-linecap="round"/>
-        <!-- Tail -->
         <path d="M50 108 Q36 115 28 130" stroke="#b5e0b5" stroke-width="7" stroke-linecap="round"/>
       </svg>
       <p class="today-end__headline">all caught up.</p>
       <p class="today-end__sub">go have a coffee — check back later for more.</p>
-
-      <!-- Date picker -->
       <div class="today-end__datepicker" id="today-datepicker">
         <button class="today-date__btn" id="today-date-prev" aria-label="Previous day">←</button>
-        <span class="today-date__label" id="today-date-label"></span>
+        <button class="today-date__label-btn" id="today-date-label-btn"></button>
         <button class="today-date__btn" id="today-date-next" aria-label="Next day">→</button>
+        <input type="date" id="today-date-input" class="today-date__input"/>
       </div>
     </div>
-
-    <!-- Loading state -->
-    <div class="today-loading" id="today-loading">
+    <div class="today-loading" id="today-loading" hidden style="display:none">
       <div class="loader__ring"></div>
     </div>
+  </div>
 
-  </div><!-- /#today-feed -->
+  <!-- ── DATE FEED (On This Day / Featured / Picture) ─────────── -->
+  <div id="date-feed" class="today-feed today-feed--hidden">
+    <div class="date-header" id="date-header">
+      <div class="date-header__pills">
+        <button class="date-pill date-pill--active" data-section="onthisday">This Day</button>
+        <button class="date-pill" data-section="featured">Featured</button>
+        <button class="date-pill" data-section="picture">Picture</button>
+      </div>
+      <div class="date-header__datepicker">
+        <button class="today-date__btn" id="date-date-prev" aria-label="Previous day">←</button>
+        <button class="today-date__label-btn" id="date-date-label-btn"></button>
+        <button class="today-date__btn" id="date-date-next" aria-label="Next day">→</button>
+        <input type="date" id="date-date-input" class="today-date__input"/>
+      </div>
+    </div>
+    <div class="date-section" id="section-onthisday">
+      <div class="today-stack" id="otd-stack"></div>
+      <div class="today-end" id="otd-end" hidden style="display:none">
+      <svg class="today-end__dino" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="85" cy="100" rx="35" ry="28" fill="#b5e0b5"/>
+        <ellipse cx="114" cy="78" rx="22" ry="18" fill="#b5e0b5"/>
+        <circle cx="120" cy="73" r="3" fill="#2a2a2a"/>
+        <circle cx="121" cy="72" r="1" fill="white"/>
+        <path d="M108 82 Q114 87 120 82" stroke="#8cc88c" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <polygon points="78,74 82,62 86,74" fill="#8cc88c"/>
+        <polygon points="85,71 89,58 93,71" fill="#8cc88c"/>
+        <polygon points="92,71 96,59 100,71" fill="#8cc88c"/>
+        <path d="M78 102 Q65 105 60 115" stroke="#8cc88c" stroke-width="5" stroke-linecap="round"/>
+        <rect x="44" y="110" width="22" height="18" rx="3" fill="#6b4c2a"/>
+        <path d="M66 116 Q72 116 72 121 Q72 126 66 126" stroke="#6b4c2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 108 Q52 103 50 98" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <path d="M56 107 Q58 101 56 96" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <path d="M62 108 Q64 103 62 98" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <path d="M68 124 L64 140" stroke="#8cc88c" stroke-width="5" stroke-linecap="round"/>
+        <path d="M90 126 L92 142" stroke="#8cc88c" stroke-width="5" stroke-linecap="round"/>
+        <path d="M50 108 Q36 115 28 130" stroke="#b5e0b5" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+        <p class="today-end__headline">that's all from history today.</p>
+        <p class="today-end__sub">every day has a story — try another date.</p>
+      </div>
+      <div class="today-loading" id="otd-loading" hidden style="display:none"><div class="loader__ring"></div></div>
+    </div>
+    <div class="date-section date-section--hidden" id="section-featured">
+      <div class="today-loading" id="featured-loading" hidden style="display:none"><div class="loader__ring"></div></div>
+      <div id="featured-card" class="date-single-card"></div>
+    </div>
+    <div class="date-section date-section--hidden" id="section-picture">
+      <div class="today-loading" id="picture-loading" hidden style="display:none"><div class="loader__ring"></div></div>
+      <div id="picture-card" class="date-picture-card"></div>
+    </div>
+  </div><!-- /#date-feed -->
   <div id="loader" class="loader" aria-label="Loading article" role="status">
     <div class="loader__ring"></div>
   </div>
@@ -476,6 +510,7 @@
   <script src="settings.js"></script>
   <script src="search.js"></script>
   <script src="today.js"></script>
+  <script src="date-feed.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

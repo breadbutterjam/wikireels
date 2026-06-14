@@ -2331,3 +2331,212 @@ body.dark .nav-menu__item {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   DATE FEED — On This Day / Featured / Picture
+═══════════════════════════════════════════════════════════ */
+
+.date-header {
+  position: absolute;
+  top: calc(24px + var(--safe-top));
+  left: 0; right: 0;
+  z-index: 6;
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0.6rem var(--pad-x);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.date-header__pills {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.date-pill {
+  font-family: var(--f-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--c-border-mid);
+  background: transparent;
+  color: var(--c-ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+
+.date-pill--active {
+  background: var(--pip-today);
+  color: #fff;
+  border-color: var(--pip-today);
+}
+
+.date-header__datepicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+/* Date section containers */
+.date-section {
+  position: absolute;
+  /* offset for date-header (~78px) */
+  top: calc(24px + var(--safe-top) + 78px);
+  left: 0; right: 0; bottom: 0;
+}
+
+.date-section--hidden { display: none; }
+
+/* OTD card stack fills its section */
+#section-onthisday .today-stack {
+  position: absolute;
+  inset: 0;
+}
+
+#section-onthisday .today-end {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: var(--c-bg);
+}
+
+#section-onthisday .today-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Featured Article single card ── */
+.date-single-card {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+}
+
+.date-single-card__thumb {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.date-single-card__thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+
+.date-single-card__body {
+  padding: 1.5rem var(--pad-x) calc(var(--safe-bottom) + 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.date-single-card__link {
+  display: inline-block;
+  margin-top: 1rem;
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--pip-today);
+  text-decoration: none;
+  border-bottom: 1px solid var(--pip-today);
+  padding-bottom: 0.1rem;
+  align-self: flex-start;
+}
+
+/* ── Picture of the Day ── */
+.date-picture-card {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+}
+
+.date-picture-card__img-wrap {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-ink);
+}
+
+.date-picture-card__img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.date-picture-card__caption {
+  flex-shrink: 0;
+  padding: 1rem var(--pad-x) calc(var(--safe-bottom) + 1.5rem);
+  background: var(--c-bg);
+  border-top: 1px solid var(--c-border);
+}
+
+.date-picture-card__title {
+  font-family: var(--f-serif);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--c-ink);
+  margin-bottom: 0.35rem;
+}
+
+.date-picture-card__desc {
+  font-family: var(--f-sans);
+  font-size: 0.75rem;
+  color: var(--c-ink-muted);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+.date-empty {
+  padding: 2rem var(--pad-x);
+  font-family: var(--f-sans);
+  font-size: 0.8rem;
+  color: var(--c-ink-faint);
+  letter-spacing: 0.04em;
+}
+
+/* ── Date label button (tappable, opens native calendar) ── */
+.today-date__label-btn {
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-muted);
+  min-width: 7rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-bottom: 1px solid var(--c-border-mid);
+  transition: color var(--dur-fast);
+}
+
+.today-date__label-btn:active { color: var(--c-ink); }
+
+/* Hidden native date input — positioned over label btn */
+.today-date__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}

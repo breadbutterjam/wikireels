@@ -112,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* Init today feed */
   Today.init();
+  DateFeed.init();
 
   const splash      = document.getElementById('splash');
   const splashSpinner = document.getElementById('splash-spinner');
@@ -350,13 +351,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   Gestures.on('swipeUp', () => {
     if (typeof closeNavMenu === 'function') closeNavMenu();
-    if (currentMode === 'news') { Today.handleSwipeUp(); return; }
+    if (currentMode === 'news')  { Today.handleSwipeUp();    return; }
+    if (currentMode === 'today') { DateFeed.handleSwipeUp(); return; }
     if (!isReaderOpen) goNext();
   });
 
   Gestures.on('swipeDown', () => {
     if (typeof closeNavMenu === 'function') closeNavMenu();
-    if (currentMode === 'news') { Today.handleSwipeDown(); return; }
+    if (currentMode === 'news')  { Today.handleSwipeDown();    return; }
+    if (currentMode === 'today') { DateFeed.handleSwipeDown(); return; }
     if (!isReaderOpen) goPrev();
   });
 
@@ -891,6 +894,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setMode('home');
     closeNavMenu();
     Today.hide();
+    DateFeed.hide();
     document.getElementById('feed').style.display = '';
   });
 
@@ -899,6 +903,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setMode('news');
     closeNavMenu();
     document.getElementById('feed').style.display = 'none';
+    DateFeed.hide();
     Today.show();
   });
 
@@ -906,7 +911,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   navToday?.addEventListener('click', () => {
     setMode('today');
     closeNavMenu();
-    showToast('On This Day — coming soon');
+    document.getElementById('feed').style.display = 'none';
+    Today.hide();
+    DateFeed.show();
   });
 
   navMenu.addEventListener('pointerenter', () => clearTimeout(navDismissTimer));

@@ -3133,3 +3133,68 @@ body.dark .nav-menu__item {
   text-align: center;
   line-height: 1.5;
 }
+
+/* ── Badge popover ── */
+.badge-popover {
+  position: absolute;
+  z-index: 600;
+  width: 220px;
+  background: var(--c-ink);
+  color: var(--c-bg);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 180ms var(--ease-smooth),
+              transform 180ms var(--ease-snap);
+  pointer-events: none;
+}
+
+.badge-popover--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.badge-popover__header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.badge-popover__icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.badge-popover__name {
+  font-family: var(--f-sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--c-bg);
+  letter-spacing: 0.01em;
+  margin-bottom: 0.15rem;
+}
+
+.badge-popover__status {
+  font-family: var(--f-sans);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.badge-popover__status--earned  { color: #7dcea0; }
+.badge-popover__status--locked  { color: rgba(247,245,240,0.35); }
+
+.badge-popover__desc {
+  font-family: var(--f-sans);
+  font-size: 0.75rem;
+  color: rgba(247,245,240,0.65);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  border-top: 1px solid rgba(247,245,240,0.12);
+  padding-top: 0.5rem;
+}

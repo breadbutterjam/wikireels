@@ -193,7 +193,6 @@ const Profile = (() => {
       accountEl?.classList.remove('profile-section--hidden');
       signinEl?.classList.add('profile-section--hidden');
       signoutEl?.classList.remove('profile-section--hidden');
-
       const photo = document.getElementById('profile-photo');
       if (photo) {
         photo.src = user.photoURL || '';
@@ -236,15 +235,64 @@ const Profile = (() => {
     container.innerHTML = '';
 
     Badges.DEFS.forEach(def => {
+      const earned = earnedIds.has(def.id);
       const el = document.createElement('div');
-      el.className = `profile-badge ${earnedIds.has(def.id) ? 'profile-badge--earned' : 'profile-badge--locked'}`;
-      el.title = `${def.label}: ${def.desc}`;
+      el.className = `profile-badge ${earned ? 'profile-badge--earned' : 'profile-badge--locked'}`;
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', `${def.label} — ${def.desc}`);
       el.innerHTML = `
         <span class="profile-badge__icon">${def.icon}</span>
         <span class="profile-badge__label">${def.label}</span>
       `;
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        showBadgePopover(def, earned, el);
+      });
       container.appendChild(el);
     });
+  }
+
+  /* ── Badge popover ── */
+  function showBadgePopover(def, earned, anchorEl) {
+    /* Remove any existing popover */
+    document.querySelector('.badge-popover')?.remove();
+
+    const pop = document.createElement('div');
+    pop.className = 'badge-popover';
+    pop.innerHTML = `
+      <div class="badge-popover__header">
+        <span class="badge-popover__icon">${def.icon}</span>
+        <div>
+          <p class="badge-popover__name">${escHtml(def.label)}</p>
+          <p class="badge-popover__status ${earned ? 'badge-popover__status--earned' : 'badge-popover__status--locked'}">
+            ${earned ? '✓ earned' : 'not yet earned'}
+          </p>
+        </div>
+      </div>
+      <p class="badge-popover__desc">${escHtml(def.desc)}</p>
+    `;
+
+    /* Position below anchor */
+    document.body.appendChild(pop);
+    const rect = anchorEl.getBoundingClientRect();
+    const popW = 220;
+    let left = rect.left + rect.width / 2 - popW / 2;
+    /* Keep within viewport */
+    left = Math.max(12, Math.min(left, window.innerWidth - popW - 12));
+    pop.style.left = `${left}px`;
+    pop.style.top  = `${rect.bottom + window.scrollY + 8}px`;
+
+    /* Animate in */
+    requestAnimationFrame(() => pop.classList.add('badge-popover--visible'));
+
+    /* Dismiss on next tap anywhere */
+    const dismiss = () => {
+      pop.classList.remove('badge-popover--visible');
+      setTimeout(() => pop.remove(), 200);
+      document.removeEventListener('click', dismiss);
+    };
+    setTimeout(() => document.addEventListener('click', dismiss), 10);
   }
 
   function renderSaves(saves) {

@@ -389,34 +389,78 @@
   <!-- ── ONBOARDING MODAL ───────────────────────────────────── -->
   <div id="onboarding" class="onboarding" role="dialog" aria-modal="true" aria-label="How to use Rabbit Hole">
     <div class="onboarding__sheet">
-      <h2 class="onboarding__title">how it works</h2>
 
-      <div class="onboarding__gesture">
-        <span class="onboarding__arrow">↑↓</span>
-        <p class="onboarding__gesture-text"><strong>swipe up / down</strong> to move between articles</p>
-      </div>
-      <div class="onboarding__gesture">
-        <span class="onboarding__arrow">←</span>
-        <p class="onboarding__gesture-text"><strong>swipe left</strong> to view images from the article</p>
-      </div>
-      <div class="onboarding__gesture">
-        <span class="onboarding__arrow">↓↓</span>
-        <p class="onboarding__gesture-text"><strong>read more</strong> dives into the full article — tap any link to go deeper</p>
-      </div>
-      <div class="onboarding__gesture">
-        <span class="onboarding__arrow">💡</span>
-        <p class="onboarding__gesture-text"><strong>double tap or tap 💡</strong> to like — shapes what you see next</p>
-      </div>
-      <div class="onboarding__gesture">
-        <span class="onboarding__arrow">🔖</span>
-        <p class="onboarding__gesture-text"><strong>tap 🔖</strong> to save an article for later</p>
-      </div>
-      <div class="onboarding__gesture">
-        <span class="onboarding__arrow">···</span>
-        <p class="onboarding__gesture-text"><strong>tap ···</strong> to hide articles like this one</p>
+      <!-- Page track — slides horizontally -->
+      <div class="onboarding__track" id="onboarding-track">
+
+        <!-- ── Page 1: Reading interactions ── -->
+        <div class="onboarding__page">
+          <h2 class="onboarding__title">how it works</h2>
+          <p class="onboarding__page-label">reading</p>
+
+          <div class="onboarding__gesture">
+            <span class="onboarding__arrow">↑↓</span>
+            <p class="onboarding__gesture-text"><strong>swipe up / down</strong> to move between articles</p>
+          </div>
+          <div class="onboarding__gesture">
+            <span class="onboarding__arrow">←</span>
+            <p class="onboarding__gesture-text"><strong>swipe left</strong> to view images from the article</p>
+          </div>
+          <div class="onboarding__gesture">
+            <span class="onboarding__arrow">↓↓</span>
+            <p class="onboarding__gesture-text"><strong>read more</strong> dives into the full article — tap any link to go deeper</p>
+          </div>
+          <div class="onboarding__gesture">
+            <span class="onboarding__arrow">💡</span>
+            <p class="onboarding__gesture-text"><strong>double tap or tap 💡</strong> to like — shapes what you see next</p>
+          </div>
+          <div class="onboarding__gesture">
+            <span class="onboarding__arrow">🔖</span>
+            <p class="onboarding__gesture-text"><strong>tap 🔖</strong> to save an article for later</p>
+          </div>
+          <div class="onboarding__gesture onboarding__gesture--last">
+            <span class="onboarding__arrow">🔍</span>
+            <p class="onboarding__gesture-text"><strong>tap 🔍</strong> to search any Wikipedia article directly</p>
+          </div>
+        </div>
+
+        <!-- ── Page 2: Navigation & profile ── -->
+        <div class="onboarding__page">
+          <h2 class="onboarding__title">finding your way</h2>
+          <p class="onboarding__page-label">navigation</p>
+
+          <div class="onboarding__gesture">
+            <span class="onboarding__arrow">●</span>
+            <p class="onboarding__gesture-text"><strong>bottom-left circle</strong> opens the floating menu — switch between Home, News, and Today</p>
+          </div>
+          <div class="onboarding__gesture">
+            <span class="onboarding__arrow">🔵</span>
+            <p class="onboarding__gesture-text"><strong>blue</strong> is home feed · <strong style="color:#EA580C">orange</strong> is news · <strong style="color:#16A34A">green</strong> is today's date</p>
+          </div>
+          <div class="onboarding__gesture">
+            <span class="onboarding__arrow">⚙︎</span>
+            <p class="onboarding__gesture-text"><strong>gear icon</strong> (top right) opens settings — change interests, appearance, and text size</p>
+          </div>
+          <div class="onboarding__gesture onboarding__gesture--last">
+            <span class="onboarding__arrow">◯</span>
+            <p class="onboarding__gesture-text"><strong>profile icon</strong> (top right) shows your stats, badges, saved articles, and leaderboard</p>
+          </div>
+        </div>
+
       </div>
 
-      <button class="onboarding__dismiss" id="onboarding-dismiss">got it, let's go</button>
+      <!-- Pagination dots -->
+      <div class="onboarding__dots" aria-hidden="true">
+        <span class="onboarding__dot onboarding__dot--active" data-page="0"></span>
+        <span class="onboarding__dot" data-page="1"></span>
+      </div>
+
+      <!-- Actions -->
+      <div class="onboarding__actions">
+        <button class="onboarding__next" id="onboarding-next">next →</button>
+        <button class="onboarding__dismiss" id="onboarding-dismiss" style="display:none">got it, let's go</button>
+      </div>
+
     </div>
   </div>
 
@@ -612,11 +656,13 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════
-       PASTE YOUR FIREBASE SDK SCRIPT BLOCK HERE
-       (the block Firebase gave you with the <script> tags
-        and the firebaseConfig + initializeApp call)
-  ══════════════════════════════════════════════════ -->
+  <!-- Firebase SDK (compat — works with vanilla JS globals) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <!-- Config injected by GitHub Actions in production,
+       or loaded from firebase-config.js locally (see firebase-config.example.js) -->
+  <script src="firebase-config.js"></script>
 
   <script src="store.js"></script>
   <script src="categories.js"></script>

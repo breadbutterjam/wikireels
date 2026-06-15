@@ -146,22 +146,66 @@ const Settings = (() => {
 /* ── Onboarding controller ── */
 const Onboarding = (() => {
 
+  let currentPage = 0;
+  const TOTAL_PAGES = 2;
+
   function show() {
     const el = document.getElementById('onboarding');
     if (!el) return;
+
+    /* Reset to page 1 every time it's shown */
+    currentPage = 0;
+    goToPage(0);
+
     el.classList.add('onboarding--visible');
 
+    document.getElementById('onboarding-next')
+      ?.addEventListener('click', nextPage);
     document.getElementById('onboarding-dismiss')
-      ?.addEventListener('click', dismiss, { once: true });
+      ?.addEventListener('click', dismiss);
+  }
+
+  function nextPage() {
+    if (currentPage < TOTAL_PAGES - 1) {
+      currentPage++;
+      goToPage(currentPage);
+    }
+  }
+
+  function goToPage(page) {
+    const track    = document.getElementById('onboarding-track');
+    const dots     = document.querySelectorAll('.onboarding__dot');
+    const nextBtn  = document.getElementById('onboarding-next');
+    const dismissBtn = document.getElementById('onboarding-dismiss');
+
+    /* Slide track */
+    if (track) {
+      track.classList.toggle('onboarding__track--page1', page === 0);
+      track.classList.toggle('onboarding__track--page2', page === 1);
+    }
+
+    /* Update dots */
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('onboarding__dot--active', i === page);
+    });
+
+    /* On last page: hide Next, show Dismiss */
+    const isLast = page === TOTAL_PAGES - 1;
+    if (nextBtn)    nextBtn.style.display    = isLast ? 'none' : '';
+    if (dismissBtn) dismissBtn.style.display = isLast ? ''     : 'none';
   }
 
   function dismiss() {
     const el = document.getElementById('onboarding');
     el?.classList.remove('onboarding--visible');
+    /* Remove listeners to avoid duplicates if shown again */
+    document.getElementById('onboarding-next')
+      ?.removeEventListener('click', nextPage);
+    document.getElementById('onboarding-dismiss')
+      ?.removeEventListener('click', dismiss);
   }
 
   function showIfFirst() {
-    /* Show only on very first session (before onboarded flag is set) */
     if (!Store.isOnboarded()) show();
   }
 

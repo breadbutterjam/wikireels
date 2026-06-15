@@ -1,0 +1,9 @@
+# Firebase config — contains API keys, never commit
+firebase-config.js
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/

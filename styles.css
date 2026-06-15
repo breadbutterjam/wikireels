@@ -1214,7 +1214,7 @@ button {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ONBOARDING MODAL
+   ONBOARDING MODAL — two-page paginated
 ═══════════════════════════════════════════════════════════ */
 
 .onboarding {
@@ -1239,28 +1239,55 @@ button {
   background: var(--c-bg);
   width: 100%;
   max-width: 480px;
-  padding: 2rem var(--pad-x) calc(var(--safe-bottom) + 1.5rem);
+  padding: 1.75rem var(--pad-x) calc(var(--safe-bottom) + 1.25rem);
   border-top: 1px solid var(--c-border);
+  overflow: hidden;
+}
+
+/* Sliding track holding both pages side by side */
+.onboarding__track {
+  display: flex;
+  width: 200%;
+  transition: transform 320ms var(--ease-snap);
+}
+
+.onboarding__track--page1 { transform: translateX(0); }
+.onboarding__track--page2 { transform: translateX(-50%); }
+
+/* Each page takes exactly half the track = full sheet width */
+.onboarding__page {
+  width: 50%;
+  flex-shrink: 0;
+  padding-right: 0.5rem; /* prevent content clipping during slide */
 }
 
 .onboarding__title {
   font-family: var(--f-serif);
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 400;
   letter-spacing: -0.02em;
   color: var(--c-ink);
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.2rem;
+}
+
+.onboarding__page-label {
+  font-family: var(--f-sans);
+  font-size: var(--fs-category);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+  margin-bottom: 1rem;
 }
 
 .onboarding__gesture {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  padding: 0.65rem 0;
+  padding: 0.6rem 0;
   border-bottom: 1px solid var(--c-border);
 }
 
-.onboarding__gesture:last-of-type { border-bottom: none; }
+.onboarding__gesture--last { border-bottom: none; }
 
 .onboarding__arrow {
   font-size: 0.9rem;
@@ -1269,6 +1296,7 @@ button {
   text-align: center;
   flex-shrink: 0;
   padding-top: 0.1rem;
+  line-height: 1.5;
 }
 
 .onboarding__gesture-text {
@@ -1283,10 +1311,39 @@ button {
   color: var(--c-ink);
 }
 
+/* Dots */
+.onboarding__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 1.1rem 0 0.9rem;
+}
+
+.onboarding__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--c-border-mid);
+  transition: background 200ms, transform 200ms;
+  display: inline-block;
+}
+
+.onboarding__dot--active {
+  background: var(--c-ink);
+  transform: scale(1.2);
+}
+
+/* Actions row */
+.onboarding__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.onboarding__next,
 .onboarding__dismiss {
   display: block;
   width: 100%;
-  margin-top: 1.5rem;
   padding: 0.9rem;
   border: 1px solid var(--c-border-mid);
   background: transparent;
@@ -1300,6 +1357,14 @@ button {
   transition: background var(--dur-fast), color var(--dur-fast);
 }
 
+.onboarding__next {
+  background: var(--c-ink);
+  color: var(--c-bg);
+  border-color: var(--c-ink);
+  letter-spacing: 0.06em;
+}
+
+.onboarding__next:active  { opacity: 0.8; }
 .onboarding__dismiss:active {
   background: var(--c-ink);
   color: var(--c-bg);

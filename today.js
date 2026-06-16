@@ -1,29 +1,31 @@
-/* today.js — News feed with date navigation */
+/* today.js — News feed: Wikipedia "In the News" + RSS sources */
 
 const Today = (() => {
 
   const FEATURED_API = (y, m, d) =>
     `https://en.wikipedia.org/api/rest_v1/feed/featured/${y}/${m}/${d}`;
 
-  const MAX_DAYS_BACK = 30; /* how far back user can browse */
+  const RSS_WORKER_URL = "https://damp-cherry-8c0b.jamtests101.workers.dev/";
+
+  const MAX_DAYS_BACK = 30;
   const DUR = 360;
 
   /* ── State ── */
-  let newsItems   = [];
-  let currentIdx  = 0;
-  let isAnimating = false;
-  let isLoaded    = false;
-  let readerOpen  = false;
-  let activeDate  = null; /* Date object for currently loaded day */
+  let newsItems    = [];
+  let currentIdx   = 0;
+  let isAnimating  = false;
+  let isLoaded     = false;
+  let readerOpen   = false;
+  let activeDate   = null;
+  let activeSource = 'wikinews'; /* 'wikinews' or an RSS feed URL */
 
   /* ── DOM refs ── */
-  let stack, loadingEl, endEl, datePrevBtn, dateNextBtn, dateLabelEl;
+  let stack, loadingEl, endEl, datePrevBtn, dateNextBtn, dateLabelEl, sourceSelect, sourceBar, datePickerWrap;
 
   const pad = n => String(n).padStart(2, '0');
 
   function isToday(date) {
-    const now = new Date();
-    return date.toDateString() === now.toDateString();
+    return date.toDateString() === new Date().toDateString();
   }
 
   function formatDateLabel(date) {
@@ -36,14 +38,14 @@ const Today = (() => {
     return d;
   }
 
-  /* ── Truncate extract ── */
   function summarise(text, max = 300) {
     if (!text || text.length <= max) return text;
     const cut = text.slice(0, max);
     return cut.slice(0, cut.lastIndexOf(' ')) + '…';
   }
 
-  /* ── Show / hide end card (with display toggle fix) ── */
+  /* ── Show / hide helpers (explicit display toggle — hidden attr alone
+        is unreliable with absolutely-positioned siblings) ── */
   function showEnd(headline, sub) {
     loadingEl.hidden = true;
     loadingEl.style.display = 'none';
@@ -59,9 +61,19 @@ const Today = (() => {
     endEl.style.display = 'none';
   }
 
-  /* ── Update date picker state ── */
+  function isEndVisible() {
+    return endEl.style.display !== 'none';
+  }
+
+  /* ── Date picker UI (only relevant for Wikipedia source) ── */
   function updateDatePicker() {
-    if (!activeDate) return;
+    if (!datePickerWrap) return;
+
+    /* Date picker only makes sense for Wikipedia News */
+    const showPicker = activeSource === 'wikinews';
+    datePickerWrap.style.display = showPicker ? '' : 'none';
+    if (!showPicker || !activeDate) return;
+
     if (dateLabelEl) dateLabelEl.textContent = formatDateLabel(activeDate);
 
     const today   = new Date();
@@ -84,24 +96,13 @@ const Today = (() => {
     }
   }
 
-  /* ── Fetch and load news for a given date ── */
-  async function loadDate(date) {
-    isLoaded    = false;
-    newsItems   = [];
-    currentIdx  = 0;
-    activeDate  = date;
-    isAnimating = false;
+  /* ══════════════════════════════════════════════════════
+     SOURCE: WIKIPEDIA "IN THE NEWS"
+  ══════════════════════════════════════════════════════ */
 
-    /* Clear stack and hide end card */
-    stack.innerHTML = '';
-    hideEnd();
-
-    loadingEl.hidden = false;
-    loadingEl.style.display = '';
-
-    const y = date.getFullYear();
-    const m = pad(date.getMonth() + 1);
-    const d = pad(date.getDate());
+  async function loadWikiNews(date) {
+    activeDate = date;
+    const y = date.getFullYear(), m = pad(date.getMonth() + 1), d = pad(date.getDate());
 
     let data;
     try {
@@ -109,12 +110,10 @@ const Today = (() => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       data = await res.json();
     } catch {
-      loadingEl.hidden = true;
-      loadingEl.style.display = 'none';
-      showEnd('Could not load news.', 'Check your connection and try again.');
-      return;
+      throw new Error('network');
     }
 
+    const items = [];
     for (const item of (data.news || [])) {
       const tmp = document.createElement('div');
       tmp.innerHTML = item.story || '';
@@ -124,22 +123,136 @@ const Today = (() => {
       const link  = (item.links || [])[0] || {};
       const title = link.title || 'In the News';
 
-      newsItems.push({
+      items.push({
         title,
         summary:   summarise(story, 300),
         extract:   link.extract || story,
         thumbnail: link.thumbnail?.source || null,
         url:       link.content_urls?.desktop?.page
                    || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`,
+        isRSS: false,
       });
+    }
+    return items;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     SOURCE: RSS FEEDS
+  ══════════════════════════════════════════════════════ */
+
+  async function loadRSSFeed(feedUrl) {
+    let xmlText;
+    try {
+      const res = await fetch(`${RSS_WORKER_URL}?feed=${encodeURIComponent(feedUrl)}`);
+      xmlText = await res.text();
+    } catch {
+      throw new Error('network');
+    }
+
+    const parsed = parseRSS(xmlText);
+    return parsed.map(item => ({
+      title:       item.title,
+      summary:     summarise(item.description, 300),
+      extract:     item.description, /* full description, shown in read-more */
+      thumbnail:   item.image,       /* deferred — only shown in read-more */
+      url:         item.link,
+      isRSS:       true,
+      pubDateText: timeAgo(item.pubDate),
+    }));
+  }
+
+  function parseRSS(xmlText) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+    return [...xmlDoc.querySelectorAll("item")].map(item => {
+      const enclosure       = item.querySelector("enclosure[type^='image']");
+      const mediaThumbnail  = item.getElementsByTagNameNS("http://search.yahoo.com/mrss/", "thumbnail")[0];
+      const mediaContent    = item.getElementsByTagNameNS("http://search.yahoo.com/mrss/", "content")[0];
+
+      const image =
+        enclosure?.getAttribute("url") ||
+        mediaThumbnail?.getAttribute("url") ||
+        mediaContent?.getAttribute("url") ||
+        extractImgFromHtml(item.querySelector("description")?.textContent) ||
+        null;
+
+      const rawDesc = item.querySelector("description")?.textContent || "";
+      const description = stripHtml(rawDesc).trim().replace(/\s+/g, " ");
+
+      return {
+        title:   item.querySelector("title")?.textContent || "",
+        link:    item.querySelector("link")?.textContent || "",
+        pubDate: item.querySelector("pubDate")?.textContent || "",
+        description,
+        image,
+      };
+    });
+  }
+
+  function stripHtml(html) {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "";
+  }
+
+  function extractImgFromHtml(html) {
+    if (!html) return null;
+    const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return match ? match[1] : null;
+  }
+
+  function timeAgo(dateString) {
+    const date = new Date(dateString);
+    if (isNaN(date)) return "";
+    const seconds = Math.floor((Date.now() - date) / 1000);
+    const intervals = [
+      [31536000, "year"], [2592000, "month"], [86400, "day"],
+      [3600, "hour"], [60, "minute"],
+    ];
+    for (const [secs, label] of intervals) {
+      const n = Math.floor(seconds / secs);
+      if (n >= 1) return `${n} ${label}${n > 1 ? "s" : ""} ago`;
+    }
+    return "just now";
+  }
+
+  /* ══════════════════════════════════════════════════════
+     UNIFIED LOAD — dispatches to the right source
+  ══════════════════════════════════════════════════════ */
+
+  async function loadSource(source, date) {
+    activeSource = source;
+    isLoaded     = false;
+    newsItems    = [];
+    currentIdx   = 0;
+    isAnimating  = false;
+
+    stack.innerHTML = '';
+    hideEnd();
+    loadingEl.hidden = false;
+    loadingEl.style.display = '';
+
+    try {
+      if (source === 'wikinews') {
+        newsItems = await loadWikiNews(date || new Date());
+      } else {
+        newsItems = await loadRSSFeed(source);
+      }
+    } catch {
+      loadingEl.hidden = true;
+      loadingEl.style.display = 'none';
+      showEnd('Could not load this source.', 'Check your connection and try again.');
+      return;
     }
 
     isLoaded = true;
     loadingEl.hidden = true;
     loadingEl.style.display = 'none';
+    updateDatePicker();
 
     if (newsItems.length === 0) {
-      showEnd('No news for this date.', 'Try a different day.');
+      showEnd('No stories right now.', 'Try a different source.');
       return;
     }
 
@@ -147,13 +260,17 @@ const Today = (() => {
     renderCard(1, true);
   }
 
-  /* initial load — uses today's date */
-  async function load() {
-    if (isLoaded) return;
-    await loadDate(new Date());
+  /* For Wikipedia date navigation specifically */
+  async function loadDate(date) {
+    await loadSource('wikinews', date);
   }
 
-  /* ── Render one card into the stack ── */
+  async function load() {
+    if (isLoaded) return;
+    await loadSource(activeSource, new Date());
+  }
+
+  /* ── Render one card ── */
   function renderCard(idx, isNext) {
     if (idx < 0 || idx >= newsItems.length) return;
     if (stack.querySelector(`[data-idx="${idx}"]`)) return;
@@ -167,7 +284,8 @@ const Today = (() => {
     summary.className = 'today-card__summary';
     summary.innerHTML = `
       <div class="card__meta">
-        <span class="card__category">In the news</span>
+        <span class="card__category">${item.isRSS ? 'News' : 'In the news'}</span>
+        ${item.pubDateText ? `<span class="today-card__pubdate">${escHtml(item.pubDateText)}</span>` : ''}
       </div>
       <h1 class="card__title">${escHtml(item.title)}</h1>
       <div class="card__body"><p>${escHtml(item.summary)}</p></div>
@@ -175,7 +293,9 @@ const Today = (() => {
       <button class="card__readmore">read more</button>
     `;
 
-    if (item.thumbnail) {
+    /* Wikipedia items show thumbnail on card face (existing behaviour).
+       RSS items defer images to read-more per requirement. */
+    if (item.thumbnail && !item.isRSS) {
       const thumb = document.createElement('div');
       thumb.className = 'today-card__thumb';
       thumb.innerHTML = `<img src="${item.thumbnail}" alt="" loading="lazy"/>`;
@@ -203,12 +323,26 @@ const Today = (() => {
       .addEventListener('click', () => exitCardReader(card));
   }
 
+  /* ── Reader: branches by source type ── */
   async function enterCardReader(card, item) {
     readerOpen = true;
     card.classList.add('today-card--reader');
     const body = card.querySelector('.today-card__reader-body');
-    body.innerHTML = '<p class="reader-loading">Loading…</p>';
     card.querySelector('.today-card__reader').scrollTop = 0;
+
+    if (item.isRSS) {
+      /* RSS: no full-article endpoint available. Show full description,
+         the (now-revealed) image, and a link to the original source. */
+      body.innerHTML = `
+        ${item.thumbnail ? `<div class="today-card__reader-image"><img src="${item.thumbnail}" alt="" loading="lazy"/></div>` : ''}
+        <p class="today-card__reader-extract">${escHtml(item.extract)}</p>
+        <a class="today-card__reader-original" href="${item.url}" target="_blank" rel="noopener">read original →</a>
+      `;
+      return;
+    }
+
+    /* Wikipedia: fetch full article HTML */
+    body.innerHTML = '<p class="reader-loading">Loading…</p>';
     try {
       const html = await API.fetchFullHTML(item.title);
       body.innerHTML = cleanHTML(html);
@@ -222,11 +356,10 @@ const Today = (() => {
     readerOpen = false;
   }
 
-  /* ── Navigation ── */
+  /* ── Navigation (unchanged) ── */
   function goNext() {
-    /* End card showing — reload same date (cycle back to first) */
-    if (endEl.style.display !== 'none') {
-      loadDate(activeDate || new Date());
+    if (isEndVisible()) {
+      loadSource(activeSource, activeDate || new Date());
       return;
     }
 
@@ -270,7 +403,6 @@ const Today = (() => {
   function goPrev() {
     if (isAnimating || readerOpen) return;
 
-    /* At first item — wrap to last */
     if (currentIdx === 0) {
       stack.innerHTML = '';
       currentIdx = newsItems.length - 1;
@@ -300,7 +432,6 @@ const Today = (() => {
     });
   }
 
-  /* ── Gesture handlers ── */
   function handleSwipeUp()   { goNext(); }
   function handleSwipeDown() { goPrev(); }
   function isReaderOpenFn()  { return readerOpen; }
@@ -322,7 +453,7 @@ const Today = (() => {
   }
 
   function escHtml(s) {
-    return String(s)
+    return String(s || '')
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -341,46 +472,53 @@ const Today = (() => {
 
   /* ── Init ── */
   function init() {
-    stack       = document.getElementById('today-stack');
-    loadingEl   = document.getElementById('today-loading');
-    endEl       = document.getElementById('today-end');
+    stack        = document.getElementById('today-stack');
+    loadingEl    = document.getElementById('today-loading');
+    endEl        = document.getElementById('today-end');
     datePrevBtn  = document.getElementById('today-date-prev');
     dateNextBtn  = document.getElementById('today-date-next');
     dateLabelEl  = document.getElementById('today-date-label-btn');
-    const dateInput = document.getElementById('today-date-input');
+    sourceSelect = document.getElementById('today-source-select');
+    sourceBar    = document.getElementById('today-source-bar');
+    datePickerWrap = document.getElementById('today-datepicker');
 
-    /* Ensure end card starts hidden */
     hideEnd();
 
-    /* Date prev/next */
+    /* Source dropdown change */
+    sourceSelect?.addEventListener('change', () => {
+      const val = sourceSelect.value || 'wikinews';
+      loadSource(val, new Date());
+    });
+
+    /* Date prev/next — only meaningful for wikinews */
     datePrevBtn?.addEventListener('click', () => {
-      if (!activeDate || datePrevBtn.disabled) return;
+      if (!activeDate || datePrevBtn.disabled || activeSource !== 'wikinews') return;
       loadDate(addDays(activeDate, -1));
     });
 
     dateNextBtn?.addEventListener('click', () => {
-      if (!activeDate || dateNextBtn.disabled) return;
+      if (!activeDate || dateNextBtn.disabled || activeSource !== 'wikinews') return;
       loadDate(addDays(activeDate, 1));
     });
 
-    /* Label tap → native calendar */
     dateLabelEl?.addEventListener('click', () => {
+      if (activeSource !== 'wikinews') return;
+      const dateInput = document.getElementById('today-date-input');
       dateInput?.showPicker?.();
       dateInput?.click();
     });
 
-    dateInput?.addEventListener('change', () => {
-      const [y, m, d] = dateInput.value.split('-').map(Number);
+    document.getElementById('today-date-input')?.addEventListener('change', (e) => {
+      const [y, m, d] = e.target.value.split('-').map(Number);
       if (y && m && d) loadDate(new Date(y, m - 1, d));
     });
 
-    /* Touch on entire today-feed so swipes work everywhere */
+    /* Touch swipes on entire today-feed */
     const feed = document.getElementById('today-feed');
     if (feed) {
       let sx = 0, sy = 0;
       feed.addEventListener('touchstart', e => {
-        sx = e.touches[0].clientX;
-        sy = e.touches[0].clientY;
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY;
       }, { passive: true });
       feed.addEventListener('touchend', e => {
         const dx = e.changedTouches[0].clientX - sx;

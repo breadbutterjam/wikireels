@@ -228,31 +228,29 @@ const Profile = (() => {
   }
 
   function renderBadges() {
-    const section = document.getElementById('profile-badges-section');
-    if (!section) return;
+    const grid    = document.getElementById('profile-badges');
+    const countEl = document.getElementById('profile-badges-count');
+    if (!grid) return;
 
-    /* Rebuild the interior — keep section label */
-    const label = section.querySelector('.profile-section-label');
-    section.innerHTML = '';
-    if (label) section.appendChild(label);
-
-    /* Earned count */
+    /* Evaluate once — this is the single source of truth for this render */
+    Badges.evaluate();
     const earnedIds = new Set(Badges.earned().map(b => b.id));
-    const countEl = document.createElement('p');
-    countEl.className = 'profile-badges-count';
-    countEl.textContent = `${earnedIds.size} of ${Badges.DEFS.length} earned`;
-    section.appendChild(countEl);
 
-    /* Carousel wrapper */
-    const carousel = document.createElement('div');
-    carousel.className = 'profile-badges-carousel';
+    if (countEl) {
+      countEl.textContent = `[${earnedIds.size} of ${Badges.DEFS.length}]`;
+    }
 
-    /* Badge grid (horizontal scroll) */
-    const grid = document.createElement('div');
-    grid.className = 'profile-badges';
-    grid.id = 'profile-badges';
+    /* Sort: earned badges first (in their original order),
+       then locked badges (in their original order) —
+       guarantees all earned badges surface on the first page */
+    const sortedDefs = [
+      ...Badges.DEFS.filter(d => earnedIds.has(d.id)),
+      ...Badges.DEFS.filter(d => !earnedIds.has(d.id)),
+    ];
 
-    Badges.DEFS.forEach(def => {
+    grid.innerHTML = '';
+
+    sortedDefs.forEach(def => {
       const earned = earnedIds.has(def.id);
       const el = document.createElement('div');
       el.className = `profile-badge ${earned ? 'profile-badge--earned' : 'profile-badge--locked'}`;
@@ -270,48 +268,21 @@ const Profile = (() => {
       grid.appendChild(el);
     });
 
-    carousel.appendChild(grid);
+    /* Wire prev/next nav buttons */
+    const prevBtn = document.getElementById('badge-nav-prev');
+    const nextBtn = document.getElementById('badge-nav-next');
 
-    /* Prev / Next buttons — scroll by one "page" (4 columns) */
-    const nav = document.createElement('div');
-    nav.className = 'profile-badges-nav';
+    if (prevBtn && nextBtn) {
+      function updateNav() {
+        prevBtn.disabled = grid.scrollLeft <= 0;
+        nextBtn.disabled = grid.scrollLeft >= grid.scrollWidth - grid.clientWidth - 1;
+      }
 
-    const prevBtn = document.createElement('button');
-    prevBtn.className = 'profile-badges-nav__btn';
-    prevBtn.textContent = '← prev';
-    prevBtn.disabled = true;
-
-    const nextBtn = document.createElement('button');
-    nextBtn.className = 'profile-badges-nav__btn';
-    nextBtn.textContent = 'next →';
-
-    /* One page = 4 badge widths */
-    function pageWidth() {
-      return grid.clientWidth; /* grid shows exactly 4 per view */
+      prevBtn.onclick = () => { grid.scrollBy({ left: -grid.clientWidth, behavior: 'smooth' }); };
+      nextBtn.onclick = () => { grid.scrollBy({ left: grid.clientWidth, behavior: 'smooth' }); };
+      grid.addEventListener('scroll', updateNav, { passive: true });
+      requestAnimationFrame(updateNav);
     }
-
-    function updateNav() {
-      prevBtn.disabled = grid.scrollLeft <= 0;
-      nextBtn.disabled = grid.scrollLeft >= grid.scrollWidth - grid.clientWidth - 1;
-    }
-
-    prevBtn.addEventListener('click', () => {
-      grid.scrollBy({ left: -pageWidth(), behavior: 'smooth' });
-    });
-
-    nextBtn.addEventListener('click', () => {
-      grid.scrollBy({ left: pageWidth(), behavior: 'smooth' });
-    });
-
-    grid.addEventListener('scroll', updateNav, { passive: true });
-
-    /* Disable next if all badges fit in view */
-    requestAnimationFrame(() => updateNav());
-
-    nav.appendChild(prevBtn);
-    nav.appendChild(nextBtn);
-    carousel.appendChild(nav);
-    section.appendChild(carousel);
   }
 
   /* ── Badge popover ── */

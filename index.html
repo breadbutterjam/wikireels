@@ -175,6 +175,27 @@
 
   <!-- ── TODAY FEED (News) ─────────────────────────────────── -->
   <div id="today-feed" class="today-feed today-feed--hidden">
+
+    <!-- Source selector -->
+    <div class="today-source-bar" id="today-source-bar">
+      <select id="today-source-select" class="today-source-select">
+        <option value="wikinews">Wikipedia — In the News</option>
+        <optgroup label="National">
+          <option value="https://indianexpress.com/section/india/feed/">Indian Express</option>
+          <option value="https://www.thehindu.com/news/national/feeder/default.rss">The Hindu</option>
+        </optgroup>
+        <optgroup label="Mumbai">
+          <option value="https://www.mid-day.com/Resources/midday/rss/mumbai-news.xml">Mid-Day</option>
+          <option value="https://www.hindustantimes.com/feeds/rss/cities/mumbai-news/rssfeed.xml">Hindustan Times</option>
+          <option value="https://www.freepressjournal.in/rss/mumbai">Free Press Journal</option>
+        </optgroup>
+        <optgroup label="Sports">
+          <option value="https://www.espncricinfo.com/rss/content/story/feeds/0.xml">ESPNcricinfo — Global</option>
+          <option value="https://www.espncricinfo.com/rss/content/story/feeds/6.xml">ESPNcricinfo — India</option>
+        </optgroup>
+      </select>
+    </div>
+
     <div class="today-stack" id="today-stack"></div>
     <div class="today-end" id="today-end" hidden style="display:none">
       <svg class="today-end__dino" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -381,8 +402,8 @@
 
   <!-- ── SPLASH SCREEN ────────────────────────────────────── -->
   <div id="splash" class="splash">
-    <p class="splash__wordmark">rabbit hole</p>
-    <p class="splash__tagline">wikipedia, one swipe at a time</p>
+    <p class="splash__wordmark">Read</p>
+    <p class="splash__tagline">one swipe at a time</p>
     <div class="splash__spinner" id="splash-spinner"></div>
   </div>
 
@@ -526,7 +547,7 @@
 
       <!-- About -->
       <section class="settings__section settings__section--about">
-        <p class="settings__about">rabbit hole · built on wikipedia</p>
+        <p class="settings__about">Read · built with love</p>
         <button class="settings__show-onboarding" id="settings-show-onboarding">show tutorial again</button>
       </section>
 
@@ -576,7 +597,14 @@
 
       <!-- Badges: always shown -->
       <div class="profile-badges-section" id="profile-badges-section">
-        <p class="profile-section-label">badges</p>
+        <div class="profile-badges-header">
+          <p class="profile-section-label">badges <span class="profile-badges-count" id="profile-badges-count"></span></p>
+          <div class="profile-badges-nav">
+            <button class="profile-badges-nav__btn" id="badge-nav-prev" aria-label="Previous badges" disabled>←</button>
+            <button class="profile-badges-nav__btn" id="badge-nav-next" aria-label="Next badges">→</button>
+          </div>
+        </div>
+        <p class="profile-badges-hint">tap a badge to see how it's earned</p>
         <div class="profile-badges" id="profile-badges"></div>
       </div>
 

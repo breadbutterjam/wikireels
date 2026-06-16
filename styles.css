@@ -2825,9 +2825,64 @@ body.dark .nav-menu__item {
   border-bottom: 1px solid var(--c-border);
 }
 
-/* Carousel wrapper — clips to show exactly 2 rows of 4 */
-.profile-badges-carousel {
-  position: relative;
+.profile-badges-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+/* Inline count sits right after "badges" label text */
+.profile-badges-count {
+  font-family: var(--f-sans);
+  font-size: var(--fs-category);
+  letter-spacing: 0.1em;
+  color: var(--c-ink-faint);
+  margin-left: 0.4rem;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.profile-badges-hint {
+  font-family: var(--f-sans);
+  font-size: 0.65rem;
+  color: var(--c-ink-faint);
+  letter-spacing: 0.03em;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+
+/* Prev / Next nav — now in header row */
+.profile-badges-nav {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.profile-badges-nav__btn {
+  font-family: var(--f-sans);
+  font-size: 0.8rem;
+  color: var(--c-ink-faint);
+  background: none;
+  border: 1px solid var(--c-border);
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--dur-fast), border-color var(--dur-fast);
+  line-height: 1;
+}
+
+.profile-badges-nav__btn:not(:disabled):active {
+  color: var(--c-ink);
+  border-color: var(--c-border-mid);
+}
+
+.profile-badges-nav__btn:disabled {
+  opacity: 0.25;
+  cursor: default;
 }
 
 /* Scrollable track */
@@ -3256,11 +3311,89 @@ body.dark .nav-menu__item {
   padding-top: 0.5rem;
 }
 
-/* ── Badge earned count ── */
-.profile-badges-count {
+/* badge count now inline — see .profile-badges-count above */
+
+/* ═══════════════════════════════════════════════════════════
+   NEWS SOURCE SELECTOR
+═══════════════════════════════════════════════════════════ */
+
+.today-source-bar {
+  position: absolute;
+  top: calc(24px + var(--safe-top));
+  left: 0;
+  right: 0;
+  z-index: 6;
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0.55rem var(--pad-x);
+}
+
+.today-source-select {
+  appearance: none;
+  -webkit-appearance: none;
   font-family: var(--f-sans);
-  font-size: 0.72rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  color: var(--c-ink-muted);
+  background: transparent;
+  border: none;
+  padding: 0.2rem 1.1rem 0.2rem 0;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.1rem center;
+  transition: color var(--dur-fast);
+}
+
+.today-source-select:focus { color: var(--c-ink); }
+
+/* Adjust stack offset to clear the new source bar */
+#today-feed .today-stack {
+  top: calc(24px + var(--safe-top) + 38px);
+}
+
+/* ── RSS card meta: publish date tag ── */
+.today-card__pubdate {
+  font-family: var(--f-sans);
+  font-size: 0.65rem;
   color: var(--c-ink-faint);
   letter-spacing: 0.04em;
-  margin-bottom: 0.75rem;
+  margin-left: 0.6rem;
+}
+
+/* ── RSS reader: image + extract + original link ── */
+.today-card__reader-image {
+  width: 100%;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.today-card__reader-image img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  max-height: 280px;
+}
+
+.today-card__reader-extract {
+  font-family: var(--f-serif);
+  font-size: var(--fs-body);
+  font-weight: 300;
+  line-height: var(--lh-body);
+  color: var(--c-ink);
+  margin-bottom: 1.5rem;
+  white-space: pre-wrap;
+}
+
+.today-card__reader-original {
+  display: inline-block;
+  font-family: var(--f-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--c-accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--c-accent);
+  padding-bottom: 0.15rem;
 }

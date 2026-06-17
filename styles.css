@@ -3237,6 +3237,12 @@ body.dark .nav-menu__item {
   gap: 0.75rem;
 }
 
+/* Higher specificity (two classes) so this always wins over
+   .profile-signin-strip's display:flex regardless of source order */
+.profile-signin-strip.profile-section--hidden {
+  display: none;
+}
+
 .profile-signin-strip__note {
   font-family: var(--f-sans);
   font-size: 0.72rem;

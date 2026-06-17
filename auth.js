@@ -25,11 +25,6 @@ const Auth = (() => {
       return;
     }
 
-    /* Surface any redirect sign-in errors (e.g. unauthorised domain) */
-    firebase.auth().getRedirectResult().catch(err => {
-      console.error('Redirect sign-in error:', err?.code, err?.message);
-    });
-
     firebase.auth().onAuthStateChanged(user => {
       _user = user;
       _listeners.forEach(fn => fn(user));
@@ -42,29 +37,20 @@ const Auth = (() => {
     });
   }
 
-  /* ── Sign in with Google — redirect-based (avoids popup/COOP issues) ── */
+  /* ── Sign in with Google — popup-based.
+        Requires the Cross-Origin-Opener-Policy meta tag in index.html
+        (same-origin-allow-popups) or the popup's result message gets
+        silently blocked by Chrome's default COOP policy. ── */
   async function signInWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     try {
-      await firebase.auth().signInWithRedirect(provider);
-      /* Page navigates away here — execution stops until redirect back */
+      await firebase.auth().signInWithPopup(provider);
+      /* onAuthStateChanged fires automatically on success */
     } catch (err) {
-      console.error('Sign-in redirect error:', err);
+      if (err.code === 'auth/popup-closed-by-user') return;
+      if (err.code === 'auth/cancelled-popup-request') return;
+      console.error('Sign-in error:', err?.code, err?.message);
       throw err;
-    }
-  }
-
-  /* ── Check for a pending redirect result on boot ──
-        Must be called once after init(); resolves once Firebase
-        has processed any pending redirect sign-in. ── */
-  async function checkRedirectResult() {
-    if (typeof firebase === 'undefined') return null;
-    try {
-      const result = await firebase.auth().getRedirectResult();
-      return result?.user || null;
-    } catch (err) {
-      console.error('Redirect result error:', err?.code, err?.message);
-      return null;
     }
   }
 
@@ -100,6 +86,6 @@ const Auth = (() => {
     };
   }
 
-  return { init, signInWithGoogle, signOut, onChange, currentUser, isSignedIn, uid, userRecord, whenResolved, checkRedirectResult };
+  return { init, signInWithGoogle, signOut, onChange, currentUser, isSignedIn, uid, userRecord, whenResolved };
 
 })();

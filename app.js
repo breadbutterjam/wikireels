@@ -104,6 +104,16 @@ document.addEventListener('DOMContentLoaded', async () => {
      4. If return visit: category picker (or skip to feed)
   ══════════════════════════════════════════════════════ */
 
+  /* ══════════════════════════════════════════════════════
+     BOOT SEQUENCE
+     1. Settings.init() — apply stored prefs immediately
+     2. Splash shows, waits for Auth to resolve
+     3a. Signed in  → proceed straight to existing flow
+     3b. Not signed in → show sign-in nudge, wait for choice
+     4. Then: first visit → onboarding → category picker
+        return visit → straight to feed
+  ══════════════════════════════════════════════════════ */
+
   /* Apply stored appearance prefs immediately */
   Settings.init();
 
@@ -124,42 +134,78 @@ document.addEventListener('DOMContentLoaded', async () => {
   Today.init();
   DateFeed.init();
 
-  const splash      = document.getElementById('splash');
+  const splash        = document.getElementById('splash');
   const splashSpinner = document.getElementById('splash-spinner');
-  const isFirstTime = !Store.isOnboarded();
-  const MIN_SPLASH  = isFirstTime ? 1600 : 800;
-
-  /* ── Configurable: how long to wait before showing spinner ── */
-  const SPINNER_DELAY = 500; /* ms — increase/decrease to taste */
+  const signinNudge    = document.getElementById('signin-nudge');
+  const isFirstTime   = !Store.isOnboarded();
+  const MIN_SPLASH     = isFirstTime ? 1600 : 800;
+  const SPINNER_DELAY  = 500;
 
   function hideSplash() {
     splash?.classList.add('splash--hidden');
   }
 
-  if (isFirstTime) {
-    setTimeout(() => {
-      hideSplash();
-      setTimeout(() => Onboarding.show(), 500);
-    }, MIN_SPLASH);
+  function showSigninNudge() {
+    return new Promise(resolve => {
+      signinNudge?.classList.add('signin-nudge--visible');
 
-  } else {
-    const splashTimer = new Promise(r => setTimeout(r, MIN_SPLASH));
+      const googleBtn = document.getElementById('nudge-google-signin');
+      const guestBtn   = document.getElementById('nudge-continue-guest');
 
-    Categories.warmPools();
-    const feedReady = bootFeed();
+      const dismissNudge = () => {
+        signinNudge?.classList.remove('signin-nudge--visible');
+        googleBtn?.removeEventListener('click', onGoogle);
+        guestBtn?.removeEventListener('click', onGuest);
+        resolve();
+      };
 
-    /* Show spinner only if feed isn't ready within SPINNER_DELAY */
-    let spinnerTimer = setTimeout(() => {
-      splashSpinner?.classList.add('splash__spinner--visible');
-    }, SPINNER_DELAY);
+      const onGoogle = async () => {
+        try {
+          await Auth.signInWithGoogle();
+        } catch (err) {
+          console.error('Sign-in failed:', err?.code, err?.message, err);
+        }
+        dismissNudge();
+      };
 
-    Promise.all([splashTimer, feedReady]).then(() => {
-      clearTimeout(spinnerTimer);
-      /* If spinner was shown, fade it out before hiding splash */
-      splashSpinner?.classList.remove('splash__spinner--visible');
-      hideSplash();
+      const onGuest = () => dismissNudge();
+
+      googleBtn?.addEventListener('click', onGoogle);
+      guestBtn?.addEventListener('click', onGuest);
     });
   }
+
+  function proceedAfterAuth() {
+    if (isFirstTime) {
+      setTimeout(() => Onboarding.show(), 500);
+    } else {
+      Categories.warmPools();
+      const feedReady = bootFeed();
+      let spinnerTimer = setTimeout(() => {
+        splashSpinner?.classList.add('splash__spinner--visible');
+      }, SPINNER_DELAY);
+      feedReady.then(() => {
+        clearTimeout(spinnerTimer);
+        splashSpinner?.classList.remove('splash__spinner--visible');
+      });
+    }
+  }
+
+  /* Minimum splash time runs in parallel with auth resolution */
+  const splashTimer = new Promise(r => setTimeout(r, MIN_SPLASH));
+
+  Promise.all([splashTimer, Auth.whenResolved()]).then(async ([, user]) => {
+    hideSplash();
+
+    if (user) {
+      /* Signed in — skip nudge entirely */
+      proceedAfterAuth();
+    } else {
+      /* Not signed in — always show the choice, every load */
+      await showSigninNudge();
+      proceedAfterAuth();
+    }
+  });
 
   document.getElementById('onboarding-dismiss')
     ?.addEventListener('click', () => Onboarding.dismiss());

@@ -636,7 +636,10 @@
       <div class="profile-saves-section">
         <div class="profile-saves-header">
           <p class="profile-section-label">saved articles</p>
-          <button class="profile-leaderboard-link" id="btn-leaderboard">leaderboard →</button>
+          <div class="profile-saves-header__links">
+            <button class="profile-leaderboard-link" id="btn-detailed-stats">stats →</button>
+            <button class="profile-leaderboard-link" id="btn-leaderboard">leaderboard →</button>
+          </div>
         </div>
         <div class="profile-saves" id="profile-saves">
           <p class="profile-saves__empty">nothing saved yet.</p>
@@ -679,6 +682,64 @@
       </div>
       <div id="leaderboard-list" class="leaderboard-list"></div>
       <div class="leaderboard-you" id="leaderboard-you" hidden></div>
+    </div>
+  </div>
+
+  <!-- ── DETAILED STATS OVERLAY ─────────────────────────────── -->
+  <div id="stats-overlay" class="profile-overlay overlay overlay--hidden" role="dialog" aria-modal="true" aria-label="Detailed stats">
+    <div class="profile-overlay__header">
+      <button class="profile-overlay__close" id="stats-close" aria-label="Close">←</button>
+      <span class="profile-overlay__title">stats</span>
+    </div>
+    <div class="profile-overlay__body">
+
+      <!-- Streak -->
+      <div class="stats-block">
+        <p class="profile-section-label">days visited</p>
+        <div class="stats-block__row">
+          <div class="stats-block__metric">
+            <span class="stats-block__val" id="stats-current-streak">—</span>
+            <span class="stats-block__label">current streak</span>
+          </div>
+          <div class="stats-block__metric">
+            <span class="stats-block__val" id="stats-longest-streak">—</span>
+            <span class="stats-block__label">longest streak</span>
+          </div>
+          <div class="stats-block__metric">
+            <span class="stats-block__val" id="stats-total-days">—</span>
+            <span class="stats-block__label">total days</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time spent -->
+      <div class="stats-block">
+        <p class="profile-section-label">time spent</p>
+        <div class="stats-block__row">
+          <div class="stats-block__metric stats-block__metric--wide">
+            <span class="stats-block__val" id="stats-time-total">—</span>
+            <span class="stats-block__label">total time in app</span>
+          </div>
+        </div>
+        <p class="stats-block__note">a rough estimate based on time the app was open and active</p>
+      </div>
+
+      <!-- Reading depth -->
+      <div class="stats-block">
+        <p class="profile-section-label">reading depth</p>
+        <div class="stats-block__row">
+          <div class="stats-block__metric">
+            <span class="stats-block__val" id="stats-max-depth">—</span>
+            <span class="stats-block__label">deepest dive</span>
+          </div>
+          <div class="stats-block__metric">
+            <span class="stats-block__val" id="stats-articles-read">—</span>
+            <span class="stats-block__label">articles read</span>
+          </div>
+        </div>
+        <p class="stats-block__note">deepest dive counts how many linked articles you followed in a row before stopping</p>
+      </div>
+
     </div>
   </div>
 

@@ -3,6 +3,34 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
   /* ══════════════════════════════════════════════════════
+     SESSION TIME TRACKING — rough estimate, flushed on
+     visibility change / unload so backgrounded tabs don't
+     silently accumulate time
+  ══════════════════════════════════════════════════════ */
+
+  let sessionStart = Date.now();
+
+  function flushSessionTime() {
+    const elapsed = Date.now() - sessionStart;
+    if (elapsed > 0) Store.addTimeSpent(elapsed);
+    sessionStart = Date.now();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      flushSessionTime();
+    } else {
+      sessionStart = Date.now(); /* resume timing */
+    }
+  });
+
+  window.addEventListener('beforeunload', flushSessionTime);
+  window.addEventListener('pagehide', flushSessionTime);
+
+  /* Record today as a visit day (independent of reading an article) */
+  Store.recordVisitToday();
+
+  /* ══════════════════════════════════════════════════════
      DOM REFS
   ══════════════════════════════════════════════════════ */
 
@@ -121,6 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   Auth.init();
   Profile.init();
   Leaderboard.init();
+  Stats.init();
 
   /* Init search — navigate callback opens reader for selected result */
   Search.init(title => enterReader(title));
@@ -460,6 +489,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /* Push to stack */
     navStack.push({ title: articleTitle, scrollTop: 0 });
+    Store.recordDepth(navStack.length);
     updateReaderHeader(articleTitle);
     readerEl.scrollTop = 0;
 

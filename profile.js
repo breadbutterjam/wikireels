@@ -17,10 +17,15 @@ const Badges = (() => {
     { id: 'streak_3',      icon: '🔥', label: '3-Day Streak',        desc: 'Read on 3 consecutive days',         check: () => currentStreak() >= 3 },
     { id: 'streak_7',      icon: '⚡', label: 'Week Warrior',        desc: 'Read on 7 consecutive days',         check: () => currentStreak() >= 7 },
     { id: 'streak_30',     icon: '🏆', label: 'Obsessed',            desc: 'Read on 30 consecutive days',        check: () => currentStreak() >= 30 },
-    { id: 'rabbit_hole',   icon: '🐇', label: 'Down the Rabbit Hole',desc: 'Follow 5 links in one session',      check: () => (Store.getSessionDepth?.() || 0) >= 5 },
+    { id: 'rabbit_hole',   icon: '🐇', label: 'Down the Rabbit Hole',desc: 'Follow 5 links deep in one dive',    check: () => Store.getMaxDepth() >= 5 },
+    { id: 'deep_diver',    icon: '🕳️', label: 'Deep Diver',          desc: 'Follow 10 links deep in one dive',   check: () => Store.getMaxDepth() >= 10 },
     { id: 'newsreader',    icon: '📰', label: 'Newsreader',          desc: 'Read 10 news articles',              check: () => (Store.getNewsCount?.() || 0) >= 10 },
     { id: 'historian',     icon: '🏛️', label: 'Historian',          desc: 'Read 10 On This Day articles',       check: () => (Store.getOTDCount?.() || 0) >= 10 },
     { id: 'polymath',      icon: '🌐', label: 'Polymath',            desc: 'Like articles in 5+ categories',    check: () => likedCategories() >= 5 },
+    { id: 'hour_in',       icon: '⏱️', label: 'Settling In',         desc: 'Spend 1 hour in the app',            check: () => Store.getTimeSpent() >= 3600000 },
+    { id: 'five_hours',    icon: '⏳', label: 'Time Flies',          desc: 'Spend 5 hours in the app',           check: () => Store.getTimeSpent() >= 18000000 },
+    { id: 'regular',       icon: '📅', label: 'Regular',             desc: 'Visit on 7 different days',          check: () => Store.getVisitDays().length >= 7 },
+    { id: 'loyal',         icon: '🗓️', label: 'Loyal',               desc: 'Visit on 30 different days',         check: () => Store.getVisitDays().length >= 30 },
   ];
 
   const EARNED_KEY = 'rh_badges';
@@ -71,7 +76,7 @@ const Badges = (() => {
     }, 3000);
   }
 
-  /* ── Streak calculation ── */
+  /* ── Streak calculation (reading-based, existing) ── */
   function currentStreak() {
     const history = Store.getHistory();
     if (history.length === 0) return 0;
@@ -89,13 +94,35 @@ const Badges = (() => {
     return streak;
   }
 
+  /* ── Longest streak ever, based on visit days (app opened, not
+        necessarily an article read) — used on the detailed stats screen ── */
+  function longestStreak() {
+    const days = [...new Set(Store.getVisitDays())]
+      .map(s => new Date(s))
+      .sort((a, b) => a - b);
+
+    if (days.length === 0) return 0;
+
+    let longest = 1, current = 1;
+    for (let i = 1; i < days.length; i++) {
+      const diff = (days[i] - days[i-1]) / (1000 * 60 * 60 * 24);
+      if (diff <= 1.5) {
+        current++;
+        longest = Math.max(longest, current);
+      } else {
+        current = 1;
+      }
+    }
+    return longest;
+  }
+
   function likedCategories() {
     const likes = Store.getLikes();
     const cats  = new Set(likes.map(a => a.description || '').filter(Boolean));
     return cats.size;
   }
 
-  return { evaluate, earned, currentStreak, DEFS };
+  return { evaluate, earned, currentStreak, longestStreak, DEFS };
 
 })();
 
@@ -130,6 +157,12 @@ const Profile = (() => {
       ?.addEventListener('click', () => {
         close();
         Leaderboard.open();
+      });
+
+    document.getElementById('btn-detailed-stats')
+      ?.addEventListener('click', () => {
+        close();
+        Stats.open();
       });
 
     /* React to auth state changes */
@@ -446,5 +479,61 @@ const Leaderboard = (() => {
   }
 
   return { init, open, close };
+
+})();
+
+/* ══════════════════════════════════════════════════════
+   DETAILED STATS SCREEN
+══════════════════════════════════════════════════════ */
+
+const Stats = (() => {
+
+  function init() {
+    document.getElementById('stats-close')
+      ?.addEventListener('click', close);
+  }
+
+  function open() {
+    document.getElementById('stats-overlay')
+      ?.classList.replace('overlay--hidden', 'overlay--visible');
+    refresh();
+  }
+
+  function close() {
+    document.getElementById('stats-overlay')
+      ?.classList.replace('overlay--visible', 'overlay--hidden');
+  }
+
+  function refresh() {
+    /* Streak block */
+    setText('stats-current-streak', Badges.currentStreak());
+    setText('stats-longest-streak', Badges.longestStreak());
+    setText('stats-total-days',     Store.getVisitDays().length);
+
+    /* Time spent — include current live session for accuracy */
+    setText('stats-time-total', formatDuration(Store.getTimeSpent()));
+
+    /* Depth */
+    setText('stats-max-depth',     Store.getMaxDepth());
+    setText('stats-articles-read', Store.getHistory().length);
+  }
+
+  function formatDuration(ms) {
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours   = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours === 0 && minutes === 0) return 'less than a minute';
+    if (hours === 0) return `${minutes} min`;
+    if (minutes === 0) return `${hours} hr`;
+    return `${hours} hr ${minutes} min`;
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  return { init, open, close, refresh };
 
 })();

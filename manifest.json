@@ -3,6 +3,7 @@
   "short_name": "Rabbit Hole",
   "description": "Wikipedia, one swipe at a time.",
   "start_url": "/",
+  "scope": "/",
   "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#f7f5f0",

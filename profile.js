@@ -74,6 +74,15 @@ const Badges = (() => {
       t.classList.remove('badge-toast--visible');
       setTimeout(() => t.remove(), 400);
     }, 3000);
+
+    /* Also fire a local notification — works even if the tab is
+       backgrounded. Silently no-ops if permission isn't granted. */
+    if (typeof Notify !== 'undefined') {
+      Notify.fire(`${badge.icon} Badge unlocked`, {
+        body: `${badge.label} — ${badge.desc}`,
+        tag: `badge-${badge.id}`, /* prevents duplicate stacking */
+      });
+    }
   }
 
   /* ── Streak calculation (reading-based, existing) ── */

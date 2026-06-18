@@ -34,6 +34,22 @@
     </button>
     <span class="top-bar__label" id="top-bar-label"></span>
     <div class="top-bar__right">
+      <!-- Bar chart → detailed stats overlay -->
+      <button class="top-bar__btn" id="btn-stats-topbar" aria-label="Stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="6" y1="20" x2="6" y2="13"/>
+          <line x1="12" y1="20" x2="12" y2="8"/>
+          <line x1="18" y1="20" x2="18" y2="11"/>
+        </svg>
+      </button>
+      <!-- Trophy → leaderboard overlay -->
+      <button class="top-bar__btn" id="btn-leaderboard-topbar" aria-label="Leaderboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/>
+          <path d="M8 5H5a2 2 0 0 0 0 4h1.5M16 5h3a2 2 0 0 1 0 4h-1.5"/>
+          <path d="M12 13v3M9 20h6M10 16.5h4v1.8a1.7 1.7 0 0 1-1.7 1.7h-0.6A1.7 1.7 0 0 1 10 18.3v-1.8z"/>
+        </svg>
+      </button>
       <!-- Gear → settings pane -->
       <button class="top-bar__btn" id="btn-settings" aria-label="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

@@ -165,6 +165,13 @@ const Profile = (() => {
         Stats.open();
       });
 
+    /* Top bar direct-access icons (same destinations as the in-profile links) */
+    document.getElementById('btn-stats-topbar')
+      ?.addEventListener('click', () => Stats.open());
+
+    document.getElementById('btn-leaderboard-topbar')
+      ?.addEventListener('click', () => Leaderboard.open());
+
     /* React to auth state changes */
     Auth.onChange(user => {
       updateTopBarAvatar(user);

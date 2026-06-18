@@ -1981,10 +1981,11 @@ button {
 
 /* Mode colour tokens */
 :root {
-  --pip-home:  #2563EB;  /* blue  */
-  --pip-news:  #EA580C;  /* orange */
-  --pip-today: #16A34A;  /* green */
-  --pip-saved: #7C3AED;  /* purple — reserved */
+  --pip-home:    #2563EB;  /* blue  */
+  --pip-news:    #EA580C;  /* orange */
+  --pip-today:   #16A34A;  /* green */
+  --pip-curated: #7B2D3E;  /* maroon/burgundy */
+  --pip-saved:   #7C3AED;  /* purple — reserved */
 }
 
 .nav-pip {
@@ -2004,9 +2005,10 @@ button {
   box-shadow: 2px -2px 8px rgba(0,0,0,0.18);
 }
 
-.nav-pip--home  { background: var(--pip-home); }
-.nav-pip--news  { background: var(--pip-news); }
-.nav-pip--today { background: var(--pip-today); }
+.nav-pip--home    { background: var(--pip-home); }
+.nav-pip--news    { background: var(--pip-news); }
+.nav-pip--today   { background: var(--pip-today); }
+.nav-pip--curated { background: var(--pip-curated); }
 
 .nav-pip:active { transform: scale(0.88); }
 
@@ -2110,9 +2112,10 @@ body.dark .nav-menu__item {
 }
 
 /* Active item takes mode colour */
-.nav-menu__item--active[data-mode="home"]  { color: var(--pip-home); }
-.nav-menu__item--active[data-mode="news"]  { color: var(--pip-news); }
-.nav-menu__item--active[data-mode="today"] { color: var(--pip-today); }
+.nav-menu__item--active[data-mode="home"]    { color: var(--pip-home); }
+.nav-menu__item--active[data-mode="news"]    { color: var(--pip-news); }
+.nav-menu__item--active[data-mode="today"]   { color: var(--pip-today); }
+.nav-menu__item--active[data-mode="curated"] { color: var(--pip-curated); }
 
 /* ═══════════════════════════════════════════════════════════
    TODAY FEED
@@ -3563,4 +3566,54 @@ body.dark .nav-menu__item {
   letter-spacing: 0.01em;
   margin-top: 0.9rem;
   font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CURATED CONTENT FEED
+═══════════════════════════════════════════════════════════ */
+
+.curated-header {
+  position: absolute;
+  top: calc(24px + var(--safe-top));
+  left: 0; right: 0;
+  z-index: 6;
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0.6rem var(--pad-x);
+}
+
+.curated-header__pills {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.curated-header__pills::-webkit-scrollbar { display: none; }
+
+.curated-pill {
+  font-family: var(--f-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--c-border-mid);
+  background: transparent;
+  color: var(--c-ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+
+.curated-pill--active {
+  background: var(--pip-curated);
+  color: #fff;
+  border-color: var(--pip-curated);
+}
+
+/* Curated stack sits below the pill header */
+#curated-feed .today-stack {
+  top: calc(24px + var(--safe-top) + 54px);
 }

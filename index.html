@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Rabbit Hole" />
   <meta name="theme-color" content="#f7f5f0" id="theme-meta" />
 
-  <title>Read</title>
+  <title>Rabbit Hole</title>
 
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -96,6 +96,14 @@
         <rect x="3" y="4" width="18" height="18" rx="2"/>
         <path d="M16 2v4M8 2v4M3 10h18"/>
         <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+      </svg>
+    </button>
+
+    <!-- Curated content (Poems / Biographies / Speeches / Major Events) -->
+    <button class="nav-menu__item" id="nav-curated" aria-label="Curated reading" data-mode="curated">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 5.5C3 4.67 3.67 4 4.5 4H10a2 2 0 0 1 2 2v14a1.5 1.5 0 0 0-1.5-1.5H3z"/>
+        <path d="M21 5.5c0-.83-.67-1.5-1.5-1.5H14a2 2 0 0 0-2 2v14a1.5 1.5 0 0 1 1.5-1.5H21z"/>
       </svg>
     </button>
 
@@ -299,6 +307,50 @@
       <div id="picture-card" class="date-picture-card"></div>
     </div>
   </div><!-- /#date-feed -->
+
+  <!-- ── CURATED CONTENT FEED ──────────────────────────────── -->
+  <div id="curated-feed" class="today-feed today-feed--hidden">
+
+    <div class="curated-header" id="curated-header">
+      <div class="curated-header__pills">
+        <button class="curated-pill curated-pill--active" data-section="poems">Poems</button>
+        <button class="curated-pill" data-section="biographies">Biographies</button>
+        <button class="curated-pill" data-section="speeches">Speeches</button>
+        <button class="curated-pill" data-section="majorEvents">Major Events</button>
+      </div>
+    </div>
+
+    <div class="today-stack" id="curated-stack"></div>
+
+    <div class="today-end" id="curated-end" hidden style="display:none">
+      <svg class="today-end__dino" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="85" cy="100" rx="35" ry="28" fill="#b5e0b5"/>
+        <ellipse cx="114" cy="78" rx="22" ry="18" fill="#b5e0b5"/>
+        <circle cx="120" cy="73" r="3" fill="#2a2a2a"/>
+        <circle cx="121" cy="72" r="1" fill="white"/>
+        <path d="M108 82 Q114 87 120 82" stroke="#8cc88c" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <polygon points="78,74 82,62 86,74" fill="#8cc88c"/>
+        <polygon points="85,71 89,58 93,71" fill="#8cc88c"/>
+        <polygon points="92,71 96,59 100,71" fill="#8cc88c"/>
+        <path d="M78 102 Q65 105 60 115" stroke="#8cc88c" stroke-width="5" stroke-linecap="round"/>
+        <rect x="44" y="110" width="22" height="18" rx="3" fill="#6b4c2a"/>
+        <path d="M66 116 Q72 116 72 121 Q72 126 66 126" stroke="#6b4c2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 108 Q52 103 50 98" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <path d="M56 107 Q58 101 56 96" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <path d="M62 108 Q64 103 62 98" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <path d="M68 124 L64 140" stroke="#8cc88c" stroke-width="5" stroke-linecap="round"/>
+        <path d="M90 126 L92 142" stroke="#8cc88c" stroke-width="5" stroke-linecap="round"/>
+        <path d="M50 108 Q36 115 28 130" stroke="#b5e0b5" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <p class="today-end__headline">that's everything for now.</p>
+      <p class="today-end__sub">try another category, or come back for more.</p>
+    </div>
+
+    <div class="today-loading" id="curated-loading" hidden style="display:none">
+      <div class="loader__ring"></div>
+    </div>
+
+  </div><!-- /#curated-feed -->
   <div id="loader" class="loader" aria-label="Loading article" role="status">
     <div class="loader__ring"></div>
   </div>
@@ -419,14 +471,14 @@
 
   <!-- ── SPLASH SCREEN ────────────────────────────────────── -->
   <div id="splash" class="splash">
-    <p class="splash__wordmark">Read</p>
-    <p class="splash__tagline">one swipe at a time</p>
+    <p class="splash__wordmark">rabbit hole</p>
+    <p class="splash__tagline">wikipedia, one swipe at a time</p>
     <div class="splash__spinner" id="splash-spinner"></div>
   </div>
 
   <!-- ── SIGN-IN NUDGE ──────────────────────────────────────── -->
   <div id="signin-nudge" class="signin-nudge">
-    <p class="signin-nudge__wordmark">Read</p>
+    <p class="signin-nudge__wordmark">rabbit hole</p>
 
     <div class="signin-nudge__options">
       <button class="signin-nudge__btn signin-nudge__btn--google" id="nudge-google-signin">
@@ -587,7 +639,7 @@
 
       <!-- About -->
       <section class="settings__section settings__section--about">
-        <p class="settings__about">Read · built on wikipedia and RSS news feeds</p>
+        <p class="settings__about">rabbit hole · built on wikipedia</p>
         <button class="settings__show-onboarding" id="settings-show-onboarding">show tutorial again</button>
       </section>
 
@@ -804,6 +856,8 @@
   <script src="search.js"></script>
   <script src="today.js"></script>
   <script src="date-feed.js"></script>
+  <script src="curated.js"></script>
+  <script src="curated-feed.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -162,6 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* Init today feed */
   Today.init();
   DateFeed.init();
+  CuratedFeed.init();
 
   const splash        = document.getElementById('splash');
   const splashSpinner = document.getElementById('splash-spinner');
@@ -436,15 +437,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   Gestures.on('swipeUp', () => {
     if (typeof closeNavMenu === 'function') closeNavMenu();
-    if (currentMode === 'news')  { Today.handleSwipeUp();    return; }
-    if (currentMode === 'today') { DateFeed.handleSwipeUp(); return; }
+    if (currentMode === 'news')    { Today.handleSwipeUp();       return; }
+    if (currentMode === 'today')   { DateFeed.handleSwipeUp();    return; }
+    if (currentMode === 'curated') { CuratedFeed.handleSwipeUp(); return; }
     if (!isReaderOpen) goNext();
   });
 
   Gestures.on('swipeDown', () => {
     if (typeof closeNavMenu === 'function') closeNavMenu();
-    if (currentMode === 'news')  { Today.handleSwipeDown();    return; }
-    if (currentMode === 'today') { DateFeed.handleSwipeDown(); return; }
+    if (currentMode === 'news')    { Today.handleSwipeDown();       return; }
+    if (currentMode === 'today')   { DateFeed.handleSwipeDown();    return; }
+    if (currentMode === 'curated') { CuratedFeed.handleSwipeDown(); return; }
     if (!isReaderOpen) goPrev();
   });
 
@@ -932,9 +935,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const navHome     = document.getElementById('nav-home');
   const navNews     = document.getElementById('nav-news');
   const navToday    = document.getElementById('nav-today');
+  const navCurated  = document.getElementById('nav-curated');
   const topBarLabel = document.getElementById('top-bar-label');
 
-  const MODE_LABELS = { home: '', news: 'News', today: 'Today' };
+  const MODE_LABELS = { home: '', news: 'News', today: 'Today', curated: 'Curated' };
   let   currentMode     = 'home';
   let   navMenuOpen     = false;
   let   navDismissTimer = null;
@@ -981,6 +985,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeNavMenu();
     Today.hide();
     DateFeed.hide();
+    CuratedFeed.hide();
     document.getElementById('feed').style.display = '';
   });
 
@@ -990,6 +995,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeNavMenu();
     document.getElementById('feed').style.display = 'none';
     DateFeed.hide();
+    CuratedFeed.hide();
     Today.show();
   });
 
@@ -999,7 +1005,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeNavMenu();
     document.getElementById('feed').style.display = 'none';
     Today.hide();
+    CuratedFeed.hide();
     DateFeed.show();
+  });
+
+  /* Nav: Curated (Poems / Biographies / Speeches / Major Events) */
+  navCurated?.addEventListener('click', () => {
+    setMode('curated');
+    closeNavMenu();
+    document.getElementById('feed').style.display = 'none';
+    Today.hide();
+    DateFeed.hide();
+    CuratedFeed.show();
   });
 
   navMenu.addEventListener('pointerenter', () => clearTimeout(navDismissTimer));

@@ -2516,7 +2516,7 @@ body.dark .nav-menu__item {
 
 .date-single-card__thumb {
   width: 100%;
-  height: 220px;
+  max-height: 66vh;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -3616,4 +3616,74 @@ body.dark .nav-menu__item {
 /* Curated stack sits below the pill header */
 #curated-feed .today-stack {
   top: calc(24px + var(--safe-top) + 54px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UPDATE AVAILABLE TOAST
+═══════════════════════════════════════════════════════════ */
+
+.update-toast {
+  position: fixed;
+  bottom: calc(var(--safe-bottom) + 1.2rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--c-ink);
+  color: var(--c-bg);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 0.6rem 0.7rem 1.1rem;
+  z-index: 550;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 250ms var(--ease-smooth), transform 250ms var(--ease-snap);
+  white-space: nowrap;
+}
+
+.update-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: all;
+}
+
+.update-toast__text {
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+.update-toast__btn {
+  font-family: var(--f-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-ink);
+  background: var(--c-accent);
+  border: none;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: opacity var(--dur-fast);
+}
+
+.update-toast__btn:active { opacity: 0.8; }
+
+/* ── Featured article inline reader ── */
+.date-featured-reader {
+  position: absolute;
+  inset: 0;
+  background: var(--c-bg);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 1.5rem var(--pad-x) calc(var(--safe-bottom) + 4rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms var(--ease-smooth);
+  z-index: 2;
+}
+
+.date-featured-reader--open {
+  opacity: 1;
+  pointer-events: all;
 }

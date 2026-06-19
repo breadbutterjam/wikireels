@@ -345,9 +345,37 @@ const DateFeed = (() => {
         <div class="card__meta"><span class="card__category">Featured Article</span></div>
         <h1 class="card__title">${escHtml(tfa.title)}</h1>
         <div class="card__body"><p>${escHtml(summarise(tfa.extract, 400))}</p></div>
-        <a class="date-single-card__link" href="${tfa.content_urls?.desktop?.page || '#'}" target="_blank" rel="noopener">read full article →</a>
+        <button class="date-single-card__link" id="featured-read-more">read full article →</button>
+      </div>
+      <div class="date-featured-reader" id="featured-reader" aria-hidden="true">
+        <div class="today-card__reader-header">
+          <button class="card__back" id="featured-reader-back">←</button>
+          <span class="today-card__reader-title-sm">${escHtml(tfa.title)}</span>
+        </div>
+        <h1 class="today-card__reader-h1">${escHtml(tfa.title)}</h1>
+        <div class="today-card__reader-body" id="featured-reader-body"></div>
       </div>
     `;
+
+    document.getElementById('featured-read-more')?.addEventListener('click', async () => {
+      const reader = document.getElementById('featured-reader');
+      const body   = document.getElementById('featured-reader-body');
+      reader.classList.add('date-featured-reader--open');
+      body.innerHTML = '<p class="reader-loading">Loading…</p>';
+      reader.scrollTop = 0;
+
+      try {
+        const html = await API.fetchFullHTML(tfa.title);
+        body.innerHTML = cleanHTML(html);
+      } catch {
+        const url = tfa.content_urls?.desktop?.page || '#';
+        body.innerHTML = `<p>Could not load article. <a href="${url}" target="_blank" rel="noopener">Open on Wikipedia →</a></p>`;
+      }
+    });
+
+    document.getElementById('featured-reader-back')?.addEventListener('click', () => {
+      document.getElementById('featured-reader')?.classList.remove('date-featured-reader--open');
+    });
   }
 
   /* ── PICTURE OF THE DAY ── */

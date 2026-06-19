@@ -22,6 +22,7 @@ const CuratedContent = {
   ],
 
   speeches: [
+    { wikiLink: "https://en.wikipedia.org/wiki/Friends,_Romans,_countrymen,_lend_me_your_ears" },
     { wikiLink: "https://en.wikipedia.org/wiki/I_Have_a_Dream" },
     { wikiLink: "https://en.wikipedia.org/wiki/Gettysburg_Address" },
     { wikiLink: "https://en.wikipedia.org/wiki/We_Shall_Fight_on_the_Beaches" },

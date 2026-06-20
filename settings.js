@@ -22,6 +22,13 @@ const Settings = (() => {
         if (toggle) toggle.checked = true;
         document.getElementById('theme-meta')?.setAttribute('content', '#111110');
       }
+
+      /* Startup stats toggle — settings shows "show" (inverted from
+         the stored "hide" flag) */
+      const startupToggle = document.getElementById('toggle-startup-stats');
+      if (startupToggle && typeof StartupStats !== 'undefined') {
+        startupToggle.checked = !StartupStats.isHidden();
+      }
     } catch {}
     applyFontSize();
   }
@@ -75,6 +82,13 @@ const Settings = (() => {
         ?.setAttribute('content', on ? '#111110' : '#f7f5f0');
       try { localStorage.setItem(DARK_KEY, on ? '1' : '0'); } catch {}
       syncPreferencesIfSignedIn();
+    });
+
+    /* Startup stats toggle ("show" in settings = inverted "hide" flag) */
+    const startupStatsToggle = document.getElementById('toggle-startup-stats');
+    startupStatsToggle?.addEventListener('change', () => {
+      const show = startupStatsToggle.checked;
+      if (typeof StartupStats !== 'undefined') StartupStats.setHidden(!show);
     });
 
     /* Font size +/- */

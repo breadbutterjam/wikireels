@@ -472,14 +472,14 @@
 
   <!-- ── SPLASH SCREEN ────────────────────────────────────── -->
   <div id="splash" class="splash">
-    <p class="splash__wordmark">Read.</p>
-    <p class="splash__tagline">one swipe at a time</p>
+    <p class="splash__wordmark">rabbit hole</p>
+    <p class="splash__tagline">wikipedia, one swipe at a time</p>
     <div class="splash__spinner" id="splash-spinner"></div>
   </div>
 
   <!-- ── SIGN-IN NUDGE ──────────────────────────────────────── -->
   <div id="signin-nudge" class="signin-nudge">
-    <p class="signin-nudge__wordmark">Read.</p>
+    <p class="signin-nudge__wordmark">rabbit hole</p>
 
     <div class="signin-nudge__options">
       <button class="signin-nudge__btn signin-nudge__btn--google" id="nudge-google-signin">
@@ -615,6 +615,14 @@
             <span class="settings__font-val" id="font-size-val">100%</span>
             <button class="settings__font-btn" data-delta="1" aria-label="Larger text">A+</button>
           </div>
+        </div>
+
+        <div class="settings__row">
+          <span class="settings__row-label">show stats section at startup</span>
+          <label class="settings__toggle" aria-label="Toggle startup stats screen">
+            <input type="checkbox" id="toggle-startup-stats" />
+            <span class="settings__toggle-track"></span>
+          </label>
         </div>
       </section>
 
@@ -752,6 +760,33 @@
       <div id="leaderboard-list" class="leaderboard-list"></div>
       <div class="leaderboard-you" id="leaderboard-you" hidden></div>
     </div>
+  </div>
+
+  <!-- ── STARTUP STATS SCREEN ───────────────────────────────── -->
+  <div id="startup-stats" class="startup-stats">
+    <button class="startup-stats__close" id="startup-stats-close" aria-label="Close">✕</button>
+
+    <p class="startup-stats__wordmark">welcome back</p>
+
+    <div class="startup-stats__grid">
+      <div class="startup-stats__metric">
+        <span class="startup-stats__val" id="ss-streak">—</span>
+        <span class="startup-stats__label">day streak</span>
+      </div>
+      <div class="startup-stats__metric">
+        <span class="startup-stats__val" id="ss-read">—</span>
+        <span class="startup-stats__label">articles read</span>
+      </div>
+      <div class="startup-stats__metric">
+        <span class="startup-stats__val" id="ss-badges">—</span>
+        <span class="startup-stats__label">badges earned</span>
+      </div>
+    </div>
+
+    <label class="startup-stats__checkbox">
+      <input type="checkbox" id="startup-stats-dismiss-pref"/>
+      <span>do not show this at startup</span>
+    </label>
   </div>
 
   <!-- ── DETAILED STATS OVERLAY ─────────────────────────────── -->

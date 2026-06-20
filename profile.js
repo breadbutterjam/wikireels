@@ -90,13 +90,16 @@ const Badges = (() => {
   }
 
   /* ── Streak calculation (reading-based, existing) ── */
+  /* ── Current streak — consecutive days up to and including today/yesterday,
+        based on visit days (app opened). Uses the SAME data source as
+        longestStreak() below — they must agree, since "current" is by
+        definition never greater than "longest". ── */
   function currentStreak() {
-    const history = Store.getHistory();
-    if (history.length === 0) return 0;
+    const days = [...new Set(Store.getVisitDays())]
+      .map(s => new Date(s))
+      .sort((a, b) => b - a); /* newest first */
 
-    const days = [...new Set(
-      history.map(h => new Date(h.savedAt).toDateString())
-    )].map(s => new Date(s)).sort((a, b) => b - a);
+    if (days.length === 0) return 0;
 
     let streak = 1;
     for (let i = 1; i < days.length; i++) {
@@ -530,8 +533,10 @@ const Stats = (() => {
 
   function refresh() {
     /* Streak block */
-    setText('stats-current-streak', Badges.currentStreak());
-    setText('stats-longest-streak', Badges.longestStreak());
+    const current = Badges.currentStreak();
+    const longest = Math.max(current, Badges.longestStreak());
+    setText('stats-current-streak', current);
+    setText('stats-longest-streak', longest);
     setText('stats-total-days',     Store.getVisitDays().length);
 
     /* Time spent — include current live session for accuracy */
@@ -559,5 +564,77 @@ const Stats = (() => {
   }
 
   return { init, open, close, refresh };
+
+})();
+
+/* ══════════════════════════════════════════════════════
+   STARTUP STATS SCREEN — simplified glanceable summary,
+   shown on app open unless the user has dismissed it via
+   the settings toggle.
+══════════════════════════════════════════════════════ */
+
+const StartupStats = (() => {
+
+  const PREF_KEY = 'rh_hide_startup_stats';
+
+  function shouldShow() {
+    try { return localStorage.getItem(PREF_KEY) !== '1'; } catch { return true; }
+  }
+
+  function setHidden(hidden) {
+    try { localStorage.setItem(PREF_KEY, hidden ? '1' : '0'); } catch {}
+  }
+
+  function isHidden() {
+    try { return localStorage.getItem(PREF_KEY) === '1'; } catch { return false; }
+  }
+
+  function init() {
+    document.getElementById('startup-stats-close')
+      ?.addEventListener('click', close);
+
+    const checkbox = document.getElementById('startup-stats-dismiss-pref');
+    checkbox?.addEventListener('change', () => {
+      setHidden(checkbox.checked);
+      /* Keep the settings-pane toggle in sync (inverted: "show" vs "hide") */
+      const settingsToggle = document.getElementById('toggle-startup-stats');
+      if (settingsToggle) settingsToggle.checked = !checkbox.checked;
+    });
+  }
+
+  /* Called once at boot, after the rest of the app has initialised.
+     Only shows if there's something worth showing (avoids an empty
+     screen for a brand new user with zero stats). */
+  function maybeShow() {
+    if (!shouldShow()) return;
+    if (Store.getHistory().length === 0) return; /* nothing to show yet */
+
+    refresh();
+    document.getElementById('startup-stats')
+      ?.classList.add('startup-stats--visible');
+  }
+
+  function refresh() {
+    setText('ss-streak', Badges.currentStreak());
+    setText('ss-read',   Store.getHistory().length);
+    setText('ss-badges', Badges.earned().length);
+
+    /* Reflect current preference state in the checkbox */
+    const checkbox = document.getElementById('startup-stats-dismiss-pref');
+    if (checkbox) checkbox.checked = isHidden();
+  }
+
+  function close() {
+    document.getElementById('startup-stats')
+      ?.classList.remove('startup-stats--visible');
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  return { init, maybeShow, close, shouldShow, setHidden, isHidden };
+
 
 })();

@@ -204,6 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   Profile.init();
   Leaderboard.init();
   Stats.init();
+  StartupStats.init();
 
   /* Init search — navigate callback opens reader for selected result */
   Search.init(title => enterReader(title));
@@ -271,6 +272,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       feedReady.then(() => {
         clearTimeout(spinnerTimer);
         splashSpinner?.classList.remove('splash__spinner--visible');
+        /* Show the startup stats glance, if not dismissed and there's
+           something worth showing — after the feed is ready so it
+           doesn't compete with the feed's own loading state */
+        StartupStats.maybeShow();
       });
     }
   }

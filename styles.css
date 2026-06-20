@@ -3687,3 +3687,110 @@ body.dark .nav-menu__item {
   opacity: 1;
   pointer-events: all;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   STARTUP STATS SCREEN
+═══════════════════════════════════════════════════════════ */
+
+.startup-stats {
+  position: fixed;
+  inset: 0;
+  z-index: 470;
+  background: var(--c-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: var(--pad-x);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms var(--ease-smooth);
+}
+
+.startup-stats--visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.startup-stats__close {
+  position: absolute;
+  top: calc(var(--safe-top) + 1.2rem);
+  right: var(--pad-x);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--c-ink-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color var(--dur-fast);
+}
+
+.startup-stats__close:active { color: var(--c-ink); }
+
+.startup-stats__wordmark {
+  font-family: var(--f-serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--c-ink);
+}
+
+.startup-stats__grid {
+  display: flex;
+  width: 100%;
+  max-width: 360px;
+}
+
+.startup-stats__metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.5rem;
+  border-right: 1px solid var(--c-border);
+}
+
+.startup-stats__metric:last-child { border-right: none; }
+
+.startup-stats__val {
+  font-family: var(--f-serif);
+  font-size: 2.2rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--c-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.startup-stats__label {
+  font-family: var(--f-sans);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+  text-align: center;
+}
+
+.startup-stats__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--f-sans);
+  font-size: 0.72rem;
+  color: var(--c-ink-faint);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.startup-stats__checkbox input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--c-ink);
+  cursor: pointer;
+}

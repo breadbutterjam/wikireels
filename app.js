@@ -4,7 +4,48 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        /* A new worker was found and is installing */
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+
+          newWorker.addEventListener('statechange', () => {
+            /* 'installed' + an existing controller means this is an
+               UPDATE (not the very first install) — show the prompt */
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateToast(() => {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              });
+            }
+          });
+        });
+      })
       .catch(err => console.warn('SW registration failed:', err));
+
+    /* Reload once the new worker actually takes control */
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+  });
+}
+
+function showUpdateToast(onUpdate) {
+  const t = document.createElement('div');
+  t.className = 'update-toast';
+  t.innerHTML = `
+    <span class="update-toast__text">A new version is ready</span>
+    <button class="update-toast__btn">Refresh</button>
+  `;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('update-toast--visible'));
+
+  t.querySelector('.update-toast__btn').addEventListener('click', () => {
+    onUpdate();
+    t.remove();
   });
 }
 
@@ -27,6 +68,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       flushSessionTime();
+      /* Page is still alive here (unlike beforeunload), so this is a
+         safe place to fire the async Firestore stats write */
+      if (typeof Sync !== 'undefined' && typeof Auth !== 'undefined' && Auth.isSignedIn()) {
+        Sync.writeStats();
+      }
     } else {
       sessionStart = Date.now(); /* resume timing */
     }

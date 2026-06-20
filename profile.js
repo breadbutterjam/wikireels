@@ -53,6 +53,10 @@ const Badges = (() => {
     if (newlyEarned.length > 0) {
       setEarned([...earned]);
       newlyEarned.forEach(showBadgeToast);
+      /* Sync to Firestore if signed in — fire and forget */
+      if (typeof Sync !== 'undefined' && typeof Auth !== 'undefined' && Auth.isSignedIn()) {
+        Sync.writeBadges();
+      }
     }
 
     return newlyEarned;
@@ -513,6 +517,10 @@ const Stats = (() => {
     document.getElementById('stats-overlay')
       ?.classList.replace('overlay--hidden', 'overlay--visible');
     refresh();
+    /* Keep the cloud copy fresh whenever the user actually looks at stats */
+    if (typeof Sync !== 'undefined' && typeof Auth !== 'undefined' && Auth.isSignedIn()) {
+      Sync.writeStats();
+    }
   }
 
   function close() {

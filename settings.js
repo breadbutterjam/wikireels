@@ -34,6 +34,13 @@ const Settings = (() => {
     try { localStorage.setItem(FONT_KEY, fontIdx); } catch {}
   }
 
+  /* Fire-and-forget preferences sync — only when signed in */
+  function syncPreferencesIfSignedIn() {
+    if (typeof Sync !== 'undefined' && typeof Auth !== 'undefined' && Auth.isSignedIn()) {
+      Sync.writePreferences();
+    }
+  }
+
   /* ── Init: wire up all settings controls ── */
   function init() {
     applyStored();
@@ -67,6 +74,7 @@ const Settings = (() => {
       document.getElementById('theme-meta')
         ?.setAttribute('content', on ? '#111110' : '#f7f5f0');
       try { localStorage.setItem(DARK_KEY, on ? '1' : '0'); } catch {}
+      syncPreferencesIfSignedIn();
     });
 
     /* Font size +/- */
@@ -76,6 +84,7 @@ const Settings = (() => {
       const delta = parseInt(btn.dataset.delta, 10);
       fontIdx = Math.max(0, Math.min(FONT_STEPS.length - 1, fontIdx + delta));
       applyFontSize();
+      syncPreferencesIfSignedIn();
     });
 
     /* Category save */
@@ -86,6 +95,7 @@ const Settings = (() => {
       API.reset().catch(() => {});
       closeSettings();
       showToast('Feed updated');
+      syncPreferencesIfSignedIn();
     });
 
     /* Reset all data */

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Leaderboard Cleanup — Read</title>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:    #f7f5f0;
+      --ink:   #1a1a18;
+      --muted: #888880;
+      --rule:  #e0ddd6;
+      --accent:#c8a96e;
+      --danger:#b5460f;
+      --good:  #2e7d4f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', -apple-system, sans-serif;
+      padding: 2.5rem 1.5rem;
+      min-height: 100vh;
+    }
+    main {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-family: 'Literata', Georgia, serif;
+      font-weight: 400;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.3rem;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin: 0 0 2rem;
+    }
+    .config-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 0;
+      border-bottom: 1px solid var(--rule);
+      font-size: 0.85rem;
+    }
+    .config-row label { color: var(--muted); }
+    .config-row select, .config-row input {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.5rem;
+      border: 1px solid var(--rule);
+      background: white;
+      border-radius: 2px;
+    }
+    button#run-btn {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: white;
+      background: var(--ink);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    button#run-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    button#run-btn:active:not(:disabled) { opacity: 0.85; }
+
+    #status {
+      margin-top: 1.5rem;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      min-height: 1.5em;
+    }
+    #status.status--running { color: var(--muted); }
+    #status.status--done     { color: var(--good); }
+    #status.status--error    { color: var(--danger); }
+
+    .log {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: white;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      line-height: 1.6;
+      color: var(--muted);
+      max-height: 240px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .log--visible { display: block; }
+
+    .auto-note {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .auto-note code {
+      background: white;
+      border: 1px solid var(--rule);
+      padding: 0.1rem 0.35rem;
+      border-radius: 2px;
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Leaderboard Cleanup</h1>
+  <p class="sub">Removes guest leaderboard entries older than the threshold below. Signed-in (Google) accounts are never touched.</p>
+
+  <div class="config-row">
+    <label for="age-select">Remove guest entries older than</label>
+    <select id="age-select">
+      <option value="1">1 day</option>
+      <option value="7" selected>7 days</option>
+      <option value="30">30 days</option>
+    </select>
+  </div>
+
+  <div class="config-row">
+    <label for="autorun-toggle">Run automatically on page load</label>
+    <input type="checkbox" id="autorun-toggle" />
+  </div>
+
+  <button id="run-btn">Run cleanup now</button>
+
+  <div id="status"></div>
+  <div id="log" class="log"></div>
+
+  <div class="auto-note">
+    To automate this without opening the page yourself, point any free scheduled-ping
+    service (e.g. cron-job.org, UptimeRobot, GitHub Actions on a schedule) at this URL
+    with <code>?autorun=1</code> appended — for example:<br/>
+    <code id="autorun-url"></code>
+  </div>
+</main>
+
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+(function () {
+  const statusEl   = document.getElementById('status');
+  const logEl      = document.getElementById('log');
+  const runBtn     = document.getElementById('run-btn');
+  const ageSelect  = document.getElementById('age-select');
+  const autorunBox = document.getElementById('autorun-toggle');
+  const autorunUrlEl = document.getElementById('autorun-url');
+
+  /* Show the autorun URL for this page so it's easy to copy into a scheduler */
+  const here = new URL(window.location.href);
+  here.search = '?autorun=1';
+  autorunUrlEl.textContent = here.toString();
+
+  function setStatus(text, kind) {
+    statusEl.textContent = text;
+    statusEl.className = kind ? `status--${kind}` : '';
+  }
+
+  function log(line) {
+    logEl.classList.add('log--visible');
+    logEl.textContent += line + '\n';
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  async function runCleanup() {
+    runBtn.disabled = true;
+    logEl.textContent = '';
+    const days = parseInt(ageSelect.value, 10);
+    setStatus(`Signing in to check permissions…`, 'running');
+
+    try {
+      /* Need to be authenticated to read/write leaderboard per the
+         security rules — sign in anonymously just for this operation
+         if not already signed in. This itself creates a throwaway
+         guest entry's auth session, but does NOT write a leaderboard
+         doc unless updateLeaderboard() is explicitly called, which
+         this page never does. */
+      if (!firebase.auth().currentUser) {
+        await firebase.auth().signInAnonymously();
+      }
+
+      setStatus(`Scanning leaderboard for guest entries older than ${days} day${days === 1 ? '' : 's'}…`, 'running');
+
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const cutoffTimestamp = firebase.firestore.Timestamp.fromDate(cutoff);
+
+      const snap = await firebase.firestore().collection('leaderboard')
+        .where('isGuest', '==', true)
+        .get();
+
+      if (snap.empty) {
+        setStatus('No guest entries found on the leaderboard.', 'done');
+        runBtn.disabled = false;
+        return;
+      }
+
+      let toDelete = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        const updatedAt = data.updatedAt; /* Firestore Timestamp */
+        if (updatedAt && updatedAt.toMillis() < cutoffTimestamp.toMillis()) {
+          toDelete.push(doc.id);
+        }
+      });
+
+      log(`Found ${snap.size} total guest entries.`);
+      log(`${toDelete.length} are older than ${days} day(s) and will be removed.`);
+
+      if (toDelete.length === 0) {
+        setStatus('Guest entries exist, but none are old enough to remove yet.', 'done');
+        runBtn.disabled = false;
+        return;
+      }
+
+      setStatus(`Removing ${toDelete.length} stale guest entr${toDelete.length === 1 ? 'y' : 'ies'}…`, 'running');
+
+      /* Batch delete — Firestore batch limit is 500 */
+      const batch = firebase.firestore().batch();
+      toDelete.forEach(id => {
+        batch.delete(firebase.firestore().collection('leaderboard').doc(id));
+        log(`  removing ${id}`);
+      });
+      await batch.commit();
+
+      setStatus(`Done. Removed ${toDelete.length} stale guest entr${toDelete.length === 1 ? 'y' : 'ies'}.`, 'done');
+
+    } catch (err) {
+      console.error(err);
+      setStatus(`Error: ${err.message || err}`, 'error');
+      log(`ERROR: ${err.code || ''} ${err.message || err}`);
+    } finally {
+      runBtn.disabled = false;
+    }
+  }
+
+  runBtn.addEventListener('click', runCleanup);
+
+  /* Auto-run if ?autorun=1 is present in the URL, or if the checkbox
+     preference was previously saved */
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('autorun') === '1') {
+    autorunBox.checked = true;
+    runCleanup();
+  }
+})();
+</script>
+</body>
+</html>

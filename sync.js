@@ -247,6 +247,7 @@ const Sync = (() => {
         uid,
         displayName: Auth.userRecord()?.displayName || 'Anonymous',
         photoURL:    Auth.userRecord()?.photoURL    || '',
+        isGuest:     Auth.isAnonymous(),
         read:        Store.getHistory().length,
         saved:       Store.getSaves().length,
         liked:       Store.getLikes().length,

@@ -221,15 +221,19 @@ const Profile = (() => {
     if (photoURL) {
       img.src    = photoURL;
       img.hidden = false;
-      icon.style.display = 'none';
+      // icon.style.display = 'none';
+      icon.classList.add('hdn');
       img.onerror = () => {
         /* Avatar image not found yet — fall back to person icon */
+        console.log("Avatar image failed to load, hiding img and showing icon");
         img.hidden = true;
-        icon.style.display = '';
+        // icon.style.display = '';
+        icon.classList.remove('hdn');
       };
     } else {
       img.hidden = true;
-      icon.style.display = '';
+      // icon.style.display = '';
+      icon.classList.remove('hdn');
     }
   }
 

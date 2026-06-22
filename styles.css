@@ -3799,3 +3799,7 @@ body.dark .nav-menu__item {
   accent-color: var(--c-ink);
   cursor: pointer;
 }
+
+.hdn{
+  display: none;
+}

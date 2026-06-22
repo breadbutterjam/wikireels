@@ -190,6 +190,7 @@ const Profile = (() => {
 
     /* React to auth state changes — refresh profile whenever auth settles */
     Auth.onChange(user => {
+      console.log("Profile observed auth change, user:", user);
       updateTopBarAvatar(user);
       if (user) {
         onSignedIn(user);
@@ -197,11 +198,13 @@ const Profile = (() => {
       } else {
         onGuest();
         refresh(); /* ensure guest state is shown correctly */
+        renderTopBarAvatar(); /* show guest avatar immediately */
       }
     });
   }
 
   function updateTopBarAvatar(user) {
+    console.log("updateTopBarAvatar user:", user);
     const img  = document.getElementById('top-bar-avatar');
     const icon = document.getElementById('top-bar-avatar-icon');
     if (!img || !icon) return;
@@ -261,11 +264,11 @@ const Profile = (() => {
   function refresh() {
     const user = Auth.currentUser();
 
-    console.log('[Profile.refresh] user:', user, 'isAnonymous:', user?.isAnonymous, 'uid:', user?.uid);
+    // console.log('[Profile.refresh] user:', user, 'isAnonymous:', user?.isAnonymous, 'uid:', user?.uid);
 
     /* Auth hasn't resolved yet — don't touch visibility */
     if (user === undefined) {
-      console.log('[Profile.refresh] auth not yet resolved, skipping');
+      // console.log('[Profile.refresh] auth not yet resolved, skipping');
       return;
     }
 
@@ -273,7 +276,7 @@ const Profile = (() => {
     const signinEl  = document.getElementById('profile-signin-strip');
     const signoutEl = document.getElementById('profile-signout-section');
 
-    console.log('[Profile.refresh] accountEl:', accountEl, 'display:', accountEl?.style.display, 'classes:', accountEl?.className);
+    // console.log('[Profile.refresh] accountEl:', accountEl, 'display:', accountEl?.style.display, 'classes:', accountEl?.className);
 
     function show(el) {
       if (!el) return;
@@ -315,28 +318,16 @@ const Profile = (() => {
         if (emailEl) emailEl.textContent = user.email       || '';
       }
     } else {
-      console.log('[Profile.refresh] No user found');
-      const photo   = document.getElementById('profile-photo');
-      const nameEl  = document.getElementById('profile-name');
-      const emailEl = document.getElementById('profile-email');
+      // console.log('[Profile.refresh] No user found');
+      
 
       show(accountEl);
       hide(signoutEl);
       show(signinEl);
 
       /* Guest — show generated name and animal avatar */ 
-
-      const identity = Auth.generateGuestIdentity();
-        if (photo) {
-          photo.src = identity.avatar;
-          photo.style.display = '';
-          photo.onerror = () => { photo.style.display = 'none'; };
-        }
-        if (nameEl)  nameEl.textContent  = identity.name;
-        if (emailEl) emailEl.textContent = 'guest';
-      // hide(accountEl);
-      // show(signinEl);
-      // hide(signoutEl);
+      renderGuestPhotoAndName()
+    
     }
 
     /* Stats — always, from localStorage */
@@ -356,6 +347,29 @@ const Profile = (() => {
 
     /* Saved articles — always */
     renderSaves(saves);
+  }
+
+  function renderTopBarAvatar() {
+    const photo = document.getElementById('top-bar-avatar');
+    const identity = Auth.generateGuestIdentity();
+    photo.src = identity.avatar;
+    photo.style.display = '';
+    photo.onerror = () => { photo.style.display = 'none'; };
+  }
+
+  function renderGuestPhotoAndName() {
+    const photo   = document.getElementById('profile-photo');
+    const nameEl  = document.getElementById('profile-name');
+    const emailEl = document.getElementById('profile-email');
+    
+    const identity = Auth.generateGuestIdentity();
+    if (photo) {
+      photo.src = identity.avatar;
+      photo.style.display = '';
+      photo.onerror = () => { photo.style.display = 'none'; };
+    }
+    if (nameEl)  nameEl.textContent  = identity.name;
+    if (emailEl) emailEl.textContent = 'guest';
   }
 
   function renderBadges() {

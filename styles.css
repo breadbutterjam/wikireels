@@ -165,7 +165,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.25rem;
   flex-shrink: 0;
 }
 
@@ -208,7 +208,7 @@ button {
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--c-ink);
-  margin-bottom: 1.4rem;
+  margin-bottom: 1rem;
   flex-shrink: 0;
 }
 

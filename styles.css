@@ -283,6 +283,10 @@ button {
 .card--reader .card__reader-header {
   opacity: 1;
   pointer-events: all;
+  top: 1.2rem;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  /* top: 22px; */
 }
 
 .card__back {
@@ -356,7 +360,7 @@ button {
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--c-ink);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.8rem;
 }
 
 .card__reader-body {
@@ -525,6 +529,10 @@ button {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+#card-reader{
+  top: 2rem;
 }
 
 /* Header row */

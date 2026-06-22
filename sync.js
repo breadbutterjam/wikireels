@@ -17,6 +17,14 @@ const Sync = (() => {
     const firestore = db();
     if (!firestore) return;
 
+    /* Guest (anonymous) users don't sync reading data — they only
+       appear on the leaderboard. Skip all the collection sync and
+       go straight to updating the leaderboard entry. */
+    if (Auth.isAnonymous()) {
+      await updateLeaderboard();
+      return;
+    }
+
     try {
       /* Pull each sub-collection from Firestore */
       for (const col of COLLECTIONS) {

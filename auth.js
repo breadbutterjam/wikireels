@@ -1,13 +1,54 @@
-/* auth.js — Firebase Auth: Google Sign-In, auth state, sign-out */
+/* auth.js — Firebase Auth: Google Sign-In, anonymous (guest) sign-in,
+   auth state management.
+
+   GUEST IDENTITY CUSTOMISATION — edit these arrays freely:
+   Adding/removing entries here changes the pool the random name
+   and avatar are drawn from. Paths in GUEST_AVATARS are relative
+   to the repo root, matching the img/ folder you'll populate.     */
+
+/* ── Guest name adjectives — edit to taste ── */
+const GUEST_ADJECTIVES = [
+  'wandering', 'curious', 'wise', 'strong', 'gentle',
+  'brave', 'quiet', 'swift', 'bright', 'daring',
+  'mighty', 'calm', 'jolly', 'keen', 'bold',
+  'cute', 'sleepy', 'hungry', 'fuzzy', 'noble',
+];
+
+/* ── Guest animals — name must match the avatar filename exactly.
+      Drop PNG files in img/avatars/ with these exact filenames.
+      Adding a new animal: add an entry here, put the file in img/avatars/. */
+const GUEST_ANIMALS = [
+  'elephant',
+  'hippo',
+  'rhinoceros',
+  'ant',
+  'giraffe',
+  'penguin',
+  'panda',
+  'koala',
+  'capybara',
+  'wombat',
+  'platypus',
+  'otter',
+  'hedgehog',
+  'sloth',
+  'meerkat',
+];
+
+/* ── Guest avatar pool — auto-derived from GUEST_ANIMALS.
+      All avatars live in img/avatars/ and are named {animal}.png.
+      Change the base path or extension here if you move/rename files. */
+const AVATAR_BASE = 'img/avatars/';
+const GUEST_AVATARS = GUEST_ANIMALS.map(a => `${AVATAR_BASE}${a}.png`);
 
 const Auth = (() => {
 
-  let _user        = null;
-  let _listeners   = [];
-  let _resolved    = false;
-  let _resolveFns  = [];
+  let _user      = null;
+  let _listeners = [];
+  let _resolved  = false;
+  let _resolveFns = [];
 
-  /* Promise that resolves once Firebase has reported initial auth state */
+  /* ── Promise resolving once Firebase reports first auth state ── */
   function whenResolved() {
     return new Promise(resolve => {
       if (_resolved) resolve(_user);
@@ -15,7 +56,7 @@ const Auth = (() => {
     });
   }
 
-  /* ── Init — called once on app boot ── */
+  /* ── Init ── */
   function init() {
     if (typeof firebase === 'undefined') {
       console.warn('Auth: Firebase SDK not loaded');
@@ -28,7 +69,6 @@ const Auth = (() => {
     firebase.auth().onAuthStateChanged(user => {
       _user = user;
       _listeners.forEach(fn => fn(user));
-
       if (!_resolved) {
         _resolved = true;
         _resolveFns.forEach(fn => fn(user));
@@ -37,15 +77,11 @@ const Auth = (() => {
     });
   }
 
-  /* ── Sign in with Google — popup-based.
-        Requires the Cross-Origin-Opener-Policy meta tag in index.html
-        (same-origin-allow-popups) or the popup's result message gets
-        silently blocked by Chrome's default COOP policy. ── */
+  /* ── Google sign-in (popup) ── */
   async function signInWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     try {
       await firebase.auth().signInWithPopup(provider);
-      /* onAuthStateChanged fires automatically on success */
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user') return;
       if (err.code === 'auth/cancelled-popup-request') return;
@@ -54,92 +90,134 @@ const Auth = (() => {
     }
   }
 
-  /* ── Generate a friendly random guest name — "Curious Badger" style.
-        Stable per-browser (stored once) so a returning guest keeps
-        the same display name across sessions. ── */
-  const ADJECTIVES = ['Curious', 'Quiet', 'Wandering', 'Bright', 'Restless', 'Keen', 'Idle', 'Drifting', 'Sharp', 'Gentle'];
-  const NOUNS      = ['Badger', 'Reader', 'Owl', 'Fox', 'Sparrow', 'Wanderer', 'Scholar', 'Magpie', 'Rabbit', 'Heron'];
-
-  function generateGuestName() {
-    const key = 'rh_guest_name';
-    try {
-      const existing = localStorage.getItem(key);
-      if (existing) return existing;
-    } catch {}
-
-    const adj  = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
-    const num  = Math.floor(Math.random() * 90) + 10; /* 10-99 */
-    const name = `${adj} ${noun} ${num}`;
-
-    try { localStorage.setItem(key, name); } catch {}
-    return name;
-  }
-
-  /* ── Anonymous sign-in — opt-in only, used so a guest can appear on
-        the public leaderboard with a generated name. Never called
-        automatically; only when the user explicitly chooses to. ── */
+  /* ── Anonymous sign-in for guests ──
+        Called automatically for guests on app boot so they're
+        included in the leaderboard from day one. Firebase persists
+        the anonymous credential in IndexedDB, so the same guest
+        keeps their uid across page reloads — they only get a fresh
+        one if they clear site data or switch browsers. ── */
   async function signInAnonymously() {
     try {
-      const result = await firebase.auth().signInAnonymously();
-      /* Tag this session as a guest so leaderboard cleanup can find it */
-      try { localStorage.setItem('rh_is_guest_leaderboard', '1'); } catch {}
-      return result?.user || null;
+      await firebase.auth().signInAnonymously();
+      /* onAuthStateChanged fires automatically */
     } catch (err) {
       console.error('Anonymous sign-in error:', err?.code, err?.message);
-      throw err;
     }
   }
 
-  function isAnonymous() {
-    return !!_user?.isAnonymous;
+  /* ── Generate a stable random guest identity ──
+        Name: "wandering-elephant-2131"
+        Avatar: a path from GUEST_AVATARS, matched by index so
+        the same animal always pairs with the same adjective/number
+        for a given browser session.
+
+        Both are persisted to localStorage so a returning guest
+        always has the same name and avatar. ── */
+  function _pickRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function generateGuestIdentity() {
+    const NAME_KEY   = 'rh_guest_name';
+    const AVATAR_KEY = 'rh_guest_avatar';
+
+    let name, avatar;
+
+    try {
+      name   = localStorage.getItem(NAME_KEY);
+      avatar = localStorage.getItem(AVATAR_KEY);
+    } catch {}
+
+    if (!name) {
+      const adj    = _pickRandom(GUEST_ADJECTIVES);
+      const animal = _pickRandom(GUEST_ANIMALS);
+      const num    = String(Math.floor(Math.random() * 9000) + 1000); /* 1000–9999 */
+      name = `${adj}-${animal}-${num}`;
+
+      /* Pick avatar by animal name so it's always consistent */
+      const animalIdx = GUEST_ANIMALS.indexOf(animal);
+      avatar = GUEST_AVATARS[animalIdx] ?? GUEST_AVATARS[0];
+
+      try {
+        localStorage.setItem(NAME_KEY,   name);
+        localStorage.setItem(AVATAR_KEY, avatar);
+      } catch {}
+    }
+
+    if (!avatar) {
+      /* Fallback: derive from stored name if avatar key was somehow lost */
+      const parts = name.split('-');
+      const animal = parts[1] || '';
+      const idx = GUEST_ANIMALS.indexOf(animal);
+      avatar = idx >= 0 ? GUEST_AVATARS[idx] : GUEST_AVATARS[0];
+      try { localStorage.setItem(AVATAR_KEY, avatar); } catch {}
+    }
+
+    return { name, avatar };
   }
 
   /* ── Sign out ── */
   async function signOut() {
     await firebase.auth().signOut();
-    /* Clear local data — revert to guest */
-    ['rh_saves','rh_likes','rh_dislikes','rh_history','rh_is_guest_leaderboard'].forEach(k => {
-      try { localStorage.removeItem(k); } catch {}
-    });
+    /* Clear local data. Guest name/avatar are intentionally kept —
+       so if they sign back in as guest they keep the same identity. */
+    [
+      'rh_saves', 'rh_likes', 'rh_dislikes', 'rh_history',
+    ].forEach(k => { try { localStorage.removeItem(k); } catch {} });
   }
 
-  /* ── Register auth state listener ── */
+  /* ── Auth state listener ── */
   function onChange(fn) {
     _listeners.push(fn);
-    /* Fire immediately with current state */
     if (_user !== undefined) fn(_user);
   }
 
   /* ── Getters ── */
-  function currentUser()  { return _user; }
-  function isSignedIn()   { return !!_user; }
-  function uid()          { return _user?.uid || null; }
+  function currentUser() { return _user; }
+  function isSignedIn()  { return !!_user; }
+  function isAnonymous() { return !!_user?.isAnonymous; }
+  function isGoogle()    { return !!_user && !_user.isAnonymous; }
+  function uid()         { return _user?.uid || null; }
 
-  /* ── Minimal user record for Firestore ── */
+  /* ── User record for Firestore ──
+        Provides consistent shape whether Google or guest. ── */
   function userRecord() {
     if (!_user) return null;
+
     if (_user.isAnonymous) {
+      const { name, avatar } = generateGuestIdentity();
       return {
-        displayName: generateGuestName(),
+        displayName: name,
         email:       '',
-        photoURL:    '',
+        photoURL:    avatar,
         uid:         _user.uid,
         isGuest:     true,
       };
     }
+
     return {
       displayName: _user.displayName || '',
-      email:       _user.email || '',
-      photoURL:    _user.photoURL || '',
+      email:       _user.email       || '',
+      photoURL:    _user.photoURL    || '',
       uid:         _user.uid,
       isGuest:     false,
     };
   }
 
   return {
-    init, signInWithGoogle, signInAnonymously, signOut, onChange,
-    currentUser, isSignedIn, isAnonymous, uid, userRecord, whenResolved,
+    init,
+    signInWithGoogle,
+    signInAnonymously,
+    signOut,
+    onChange,
+    whenResolved,
+    currentUser,
+    isSignedIn,
+    isAnonymous,
+    isGoogle,
+    uid,
+    userRecord,
+    generateGuestIdentity,
   };
 
 })();

@@ -316,6 +316,10 @@ const Profile = (() => {
       }
     } else {
       console.log('[Profile.refresh] No user found');
+      const photo   = document.getElementById('profile-photo');
+      const nameEl  = document.getElementById('profile-name');
+      const emailEl = document.getElementById('profile-email');
+
       const identity = Auth.generateGuestIdentity();
         if (photo) {
           photo.src = identity.avatar;

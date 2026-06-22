@@ -211,11 +211,13 @@ const Profile = (() => {
     /* For anonymous guests, use the generated avatar path.
        For Google users, use the Google photo URL. */
     let photoURL = user?.photoURL || '';
+    console.log("Initial photoURL:", photoURL);
     if (user?.isAnonymous) {
       const identity = Auth.generateGuestIdentity();
       photoURL = identity.avatar;
     }
 
+    console.log("Final photoURL:", photoURL);
     if (photoURL) {
       img.src    = photoURL;
       img.hidden = false;

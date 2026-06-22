@@ -320,6 +320,12 @@ const Profile = (() => {
       const nameEl  = document.getElementById('profile-name');
       const emailEl = document.getElementById('profile-email');
 
+      show(accountEl);
+      hide(signoutEl);
+      show(signinEl);
+
+      /* Guest — show generated name and animal avatar */ 
+
       const identity = Auth.generateGuestIdentity();
         if (photo) {
           photo.src = identity.avatar;

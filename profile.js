@@ -315,9 +315,18 @@ const Profile = (() => {
         if (emailEl) emailEl.textContent = user.email       || '';
       }
     } else {
-      hide(accountEl);
-      show(signinEl);
-      hide(signoutEl);
+      console.log('[Profile.refresh] No user found');
+      const identity = Auth.generateGuestIdentity();
+        if (photo) {
+          photo.src = identity.avatar;
+          photo.style.display = '';
+          photo.onerror = () => { photo.style.display = 'none'; };
+        }
+        if (nameEl)  nameEl.textContent  = identity.name;
+        if (emailEl) emailEl.textContent = 'guest';
+      // hide(accountEl);
+      // show(signinEl);
+      // hide(signoutEl);
     }
 
     /* Stats — always, from localStorage */

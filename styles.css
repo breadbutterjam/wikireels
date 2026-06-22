@@ -2685,7 +2685,12 @@ body.dark .nav-menu__item {
 }
 
 /* ── Section visibility ── */
+/* ── Profile section visibility — compound selectors ensure hidden
+      always wins over any element-level display rules ── */
 .profile-section--hidden { display: none; }
+.profile-signin-strip.profile-section--hidden { display: none; }
+.profile-account-section.profile-section--hidden { display: none; }
+.profile-signout-section.profile-section--hidden { display: none; }
 
 /* ── Guest state ── */
 .profile-guest__copy {

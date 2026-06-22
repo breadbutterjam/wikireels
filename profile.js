@@ -188,13 +188,15 @@ const Profile = (() => {
     document.getElementById('btn-leaderboard-topbar')
       ?.addEventListener('click', () => Leaderboard.open());
 
-    /* React to auth state changes */
+    /* React to auth state changes — refresh profile whenever auth settles */
     Auth.onChange(user => {
       updateTopBarAvatar(user);
       if (user) {
         onSignedIn(user);
+        refresh(); /* ensure account section shows immediately */
       } else {
         onGuest();
+        refresh(); /* ensure guest state is shown correctly */
       }
     });
   }
@@ -203,10 +205,24 @@ const Profile = (() => {
     const img  = document.getElementById('top-bar-avatar');
     const icon = document.getElementById('top-bar-avatar-icon');
     if (!img || !icon) return;
-    if (user?.photoURL) {
-      img.src    = user.photoURL;
+
+    /* For anonymous guests, use the generated avatar path.
+       For Google users, use the Google photo URL. */
+    let photoURL = user?.photoURL || '';
+    if (user?.isAnonymous) {
+      const identity = Auth.generateGuestIdentity();
+      photoURL = identity.avatar;
+    }
+
+    if (photoURL) {
+      img.src    = photoURL;
       img.hidden = false;
       icon.style.display = 'none';
+      img.onerror = () => {
+        /* Avatar image not found yet — fall back to person icon */
+        img.hidden = true;
+        icon.style.display = '';
+      };
     } else {
       img.hidden = true;
       icon.style.display = '';
@@ -214,16 +230,21 @@ const Profile = (() => {
   }
 
   async function onSignedIn(user) {
-    /* Sync data */
+    /* Anonymous guests: push their leaderboard entry right away
+       (no private data to sync, just the public score). */
+    if (user.isAnonymous) {
+      await Sync.updateLeaderboard();
+      Badges.evaluate();
+      return;
+    }
+    /* Google: full two-way sync */
     await Sync.onSignIn(user.uid);
     await Sync.updateLeaderboard();
-
-    /* Evaluate badges */
     Badges.evaluate();
   }
 
   function onGuest() {
-    /* Nothing to sync — guest mode */
+    /* Should not reach here now that anonymous auth fires for all guests */
   }
 
   function open() {
@@ -240,28 +261,53 @@ const Profile = (() => {
   function refresh() {
     const user = Auth.currentUser();
 
-    /* Account section — signed in only */
-    const accountEl  = document.getElementById('profile-account-section');
-    const signinEl   = document.getElementById('profile-signin-strip');
-    const signoutEl  = document.getElementById('profile-signout-section');
+    const accountEl = document.getElementById('profile-account-section');
+    const signinEl  = document.getElementById('profile-signin-strip');
+    const signoutEl = document.getElementById('profile-signout-section');
+
+    function show(el) {
+      if (!el) return;
+      el.classList.remove('profile-section--hidden');
+      el.style.display = '';
+    }
+    function hide(el) {
+      if (!el) return;
+      el.classList.add('profile-section--hidden');
+      el.style.display = 'none';
+    }
 
     if (user) {
-      accountEl?.classList.remove('profile-section--hidden');
-      signinEl?.classList.add('profile-section--hidden');
-      signoutEl?.classList.remove('profile-section--hidden');
-      const photo = document.getElementById('profile-photo');
-      if (photo) {
-        photo.src = user.photoURL || '';
-        photo.style.display = user.photoURL ? '' : 'none';
-      }
+      show(accountEl);
+      hide(signinEl);
+      show(signoutEl);
+
+      const photo   = document.getElementById('profile-photo');
       const nameEl  = document.getElementById('profile-name');
       const emailEl = document.getElementById('profile-email');
-      if (nameEl)  nameEl.textContent  = user.displayName || '';
-      if (emailEl) emailEl.textContent = user.email || '';
+
+      if (user.isAnonymous) {
+        /* Guest — show generated name and animal avatar */
+        const identity = Auth.generateGuestIdentity();
+        if (photo) {
+          photo.src = identity.avatar;
+          photo.style.display = '';
+          photo.onerror = () => { photo.style.display = 'none'; };
+        }
+        if (nameEl)  nameEl.textContent  = identity.name;
+        if (emailEl) emailEl.textContent = 'guest';
+      } else {
+        /* Google account */
+        if (photo) {
+          photo.src = user.photoURL || '';
+          photo.style.display = user.photoURL ? '' : 'none';
+        }
+        if (nameEl)  nameEl.textContent  = user.displayName || '';
+        if (emailEl) emailEl.textContent = user.email       || '';
+      }
     } else {
-      accountEl?.classList.add('profile-section--hidden');
-      signinEl?.classList.remove('profile-section--hidden');
-      signoutEl?.classList.add('profile-section--hidden');
+      hide(accountEl);
+      show(signinEl);
+      hide(signoutEl);
     }
 
     /* Stats — always, from localStorage */

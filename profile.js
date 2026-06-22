@@ -198,7 +198,6 @@ const Profile = (() => {
       } else {
         onGuest();
         refresh(); /* ensure guest state is shown correctly */
-        renderTopBarAvatar(); /* show guest avatar immediately */
       }
     });
   }

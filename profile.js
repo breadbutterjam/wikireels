@@ -212,7 +212,7 @@ const Profile = (() => {
        For Google users, use the Google photo URL. */
     let photoURL = user?.photoURL || '';
     console.log("Initial photoURL:", photoURL);
-    if (user?.isAnonymous) {
+    if (!user || user?.isAnonymous) {
       const identity = Auth.generateGuestIdentity();
       photoURL = identity.avatar;
     }

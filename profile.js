@@ -261,12 +261,19 @@ const Profile = (() => {
   function refresh() {
     const user = Auth.currentUser();
 
+    console.log('[Profile.refresh] user:', user, 'isAnonymous:', user?.isAnonymous, 'uid:', user?.uid);
+
     /* Auth hasn't resolved yet — don't touch visibility */
-    if (user === undefined) return;
+    if (user === undefined) {
+      console.log('[Profile.refresh] auth not yet resolved, skipping');
+      return;
+    }
 
     const accountEl = document.getElementById('profile-account-section');
     const signinEl  = document.getElementById('profile-signin-strip');
     const signoutEl = document.getElementById('profile-signout-section');
+
+    console.log('[Profile.refresh] accountEl:', accountEl, 'display:', accountEl?.style.display, 'classes:', accountEl?.className);
 
     function show(el) {
       if (!el) return;

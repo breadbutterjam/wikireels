@@ -67,6 +67,7 @@ const Auth = (() => {
     }
 
     firebase.auth().onAuthStateChanged(user => {
+      console.log('[Auth.onAuthStateChanged] uid:', user?.uid, 'isAnonymous:', user?.isAnonymous);
       _user = user;
       _listeners.forEach(fn => fn(user));
       if (!_resolved) {
@@ -168,8 +169,12 @@ const Auth = (() => {
 
   /* ── Auth state listener ── */
   function onChange(fn) {
+    console.log('[Auth.onChange] registered, _user:', _user === undefined ? 'undefined' : (_user?.uid || 'null'));
     _listeners.push(fn);
-    if (_user !== undefined) fn(_user);
+    if (_user !== undefined) {
+      console.log('[Auth.onChange] firing immediately with:', _user?.uid || 'null');
+      fn(_user);
+    }
   }
 
   /* ── Getters ── */

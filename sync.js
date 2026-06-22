@@ -269,9 +269,29 @@ const Sync = (() => {
     }
   }
 
-  /* ── Fetch leaderboard ── */
+  /* ── Fetch leaderboard — waits for auth to resolve first,
+        since Firestore read rules require request.auth != null ── */
   async function fetchLeaderboard(metric = 'read', limit = 20) {
     if (!db()) return [];
+
+    /* Wait for auth to settle before querying — the leaderboard
+       read rule requires request.auth != null, so an unauthenticated
+       read will always fail with permission-denied */
+    try {
+      await Auth.whenResolved();
+    } catch {}
+
+    /* If still not authenticated after resolution (should not happen
+       in normal flow), sign in anonymously so the read can proceed */
+    if (!firebase.auth().currentUser) {
+      try {
+        await firebase.auth().signInAnonymously();
+      } catch (err) {
+        console.warn('Sync.fetchLeaderboard: anonymous sign-in failed:', err?.code);
+        return [];
+      }
+    }
+
     try {
       const snap = await db().collection('leaderboard')
         .orderBy(metric, 'desc').limit(limit).get();

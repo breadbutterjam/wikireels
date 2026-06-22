@@ -43,7 +43,7 @@ const GUEST_AVATARS = GUEST_ANIMALS.map(a => `${AVATAR_BASE}${a}.png`);
 
 const Auth = (() => {
 
-  let _user      = null;
+  let _user      = undefined;  /* undefined = not yet resolved; null = resolved, no user */
   let _listeners = [];
   let _resolved  = false;
   let _resolveFns = [];

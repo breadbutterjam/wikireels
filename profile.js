@@ -261,6 +261,9 @@ const Profile = (() => {
   function refresh() {
     const user = Auth.currentUser();
 
+    /* Auth hasn't resolved yet — don't touch visibility */
+    if (user === undefined) return;
+
     const accountEl = document.getElementById('profile-account-section');
     const signinEl  = document.getElementById('profile-signin-strip');
     const signoutEl = document.getElementById('profile-signout-section');

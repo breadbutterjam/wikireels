@@ -321,10 +321,22 @@ const Sync = (() => {
     return [...map.values()].sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
   }
 
+  async function deleteLeaderboardEntry() {
+    const uid = Auth.uid();
+    if (!uid || !db()) return false;
+    try {
+      await db().collection('leaderboard').doc(uid).delete();
+      return true;
+    } catch (err) {
+      console.warn('Sync.deleteLeaderboardEntry error:', err?.code, err?.message);
+      return false;
+    }
+  }
+
   return {
     onSignIn, write, remove,
     writeBadges, writeStats, writePreferences,
-    updateLeaderboard, fetchLeaderboard,
+    updateLeaderboard, fetchLeaderboard, deleteLeaderboardEntry,
   };
 
 })();

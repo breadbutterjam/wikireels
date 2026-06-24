@@ -739,6 +739,7 @@
 
       <!-- Sign out: shown only when signed in -->
       <div id="profile-signout-section" class="profile-section--hidden">
+        <button class="profile-delete-lb" id="btn-delete-leaderboard">remove me from leaderboard</button>
         <button class="profile-signout" id="btn-signout">sign out</button>
       </div>
 
@@ -872,6 +873,18 @@
 
     </div>
   </div>
+
+  <!-- ── DELETE LEADERBOARD CONFIRM DIALOG ─────────────── -->
+<div id="delete-lb-dialog" class="confirm-dialog confirm-dialog--hidden" role="alertdialog" aria-modal="true">
+  <div class="confirm-dialog__box">
+    <p class="confirm-dialog__title">remove from leaderboard?</p>
+    <p class="confirm-dialog__body" id="delete-lb-msg"></p>
+    <div class="confirm-dialog__actions">
+      <button class="confirm-dialog__cancel" id="delete-lb-cancel">cancel</button>
+      <button class="confirm-dialog__confirm" id="delete-lb-confirm">remove &amp; sign out</button>
+    </div>
+  </div>
+</div>
 
   <!-- Firebase SDK (compat — works with vanilla JS globals) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>

@@ -169,6 +169,18 @@ const Profile = (() => {
         close();
       });
 
+    document.getElementById('btn-delete-leaderboard')
+      ?.addEventListener('click', () => showDeleteConfirm());
+
+    document.getElementById('delete-lb-cancel')
+      ?.addEventListener('click', () => hideDeleteConfirm());
+
+    document.getElementById('delete-lb-confirm')
+      ?.addEventListener('click', async () => {
+        hideDeleteConfirm();
+        await performDeleteAndSignOut();
+      });
+
     document.getElementById('btn-leaderboard')
       ?.addEventListener('click', () => {
         close();
@@ -517,6 +529,44 @@ const Profile = (() => {
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
+
+  function showDeleteConfirm() {
+  const user  = Auth.currentUser();
+  const msgEl = document.getElementById('delete-lb-msg');
+  if (msgEl) {
+    if (user?.isAnonymous) {
+      msgEl.textContent =
+        'This will remove your guest entry from the leaderboard and sign you out. ' +
+        'Your next visit will generate a fresh guest identity. ' +
+        'Your saves and reading history on this device are not affected.';
+    } else {
+      msgEl.textContent =
+        'This will remove your entry from the leaderboard and sign you out. ' +
+        'Your saves, likes, and reading history are not deleted. ' +
+        'Signing back in will add you to the leaderboard again automatically.';
+    }
+  }
+  document.getElementById('delete-lb-dialog')
+    ?.classList.replace('confirm-dialog--hidden', 'confirm-dialog--visible');
+}
+
+function hideDeleteConfirm() {
+  document.getElementById('delete-lb-dialog')
+    ?.classList.replace('confirm-dialog--visible', 'confirm-dialog--hidden');
+}
+
+async function performDeleteAndSignOut() {
+  const isGuest = Auth.isAnonymous();
+  await Sync.deleteLeaderboardEntry();
+  if (isGuest) {
+    try {
+      localStorage.removeItem('rh_guest_name');
+      localStorage.removeItem('rh_guest_animal');
+    } catch {}
+  }
+  await Auth.signOut();
+  close();
+}
 
   return { init, open, close, refresh };
 

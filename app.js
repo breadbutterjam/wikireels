@@ -533,7 +533,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   ══════════════════════════════════════════════════════ */
 
   const NAV_STACK_MAX = 10;
-  let navStack = [];   /* [{title, scrollTop}] — current article always at tail */
+  let navStack = [];   /* [{title, scrollTop, article?}] — current article always at tail */
 
   readMoreBtn.addEventListener('click', () => enterReader());
   backBtn.addEventListener('click', () => navigateBack());
@@ -549,8 +549,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       cardCurrent.classList.add('card--reader');
     }
 
-    /* Push to stack */
-    navStack.push({ title: articleTitle, scrollTop: 0 });
+    /* Push to stack — include article data if entering from card (title===null),
+       otherwise it's a deep-dive link and we only have the title for now */
+    navStack.push({
+      title:   articleTitle,
+      scrollTop: 0,
+      article: title ? null : currentArticle,  /* null for deep-dive links */
+    });
     Store.recordDepth(navStack.length);
     updateReaderHeader(articleTitle);
     readerEl.scrollTop = 0;
@@ -566,13 +571,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     readerBodyEl.innerHTML = '<p class="reader-loading">Loading…</p>';
 
     try {
-      const html = await (title
-        ? API.fetchFullHTML(articleTitle)
-        : API.fetchFullHTML(articleTitle));
+      /* For deep-dive links (title passed explicitly), fetch both the
+         full HTML AND a summary so we have proper data if the user saves */
+      const [html] = await Promise.all([
+        API.fetchFullHTML(articleTitle),
+        title ? enrichNavStackEntry(articleTitle) : Promise.resolve(),
+      ]);
       readerBodyEl.innerHTML = cleanHTML(html);
       attachReaderLinks();
     } catch {
       readerBodyEl.innerHTML = `<p>Could not load article. <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(articleTitle)}" target="_blank" rel="noopener">Open on Wikipedia →</a></p>`;
+    }
+  }
+
+  /* Fetch a Wikipedia summary for a deep-dived article and store it
+     in the matching navStack entry so saves have proper metadata.
+     Fires in parallel with the full HTML fetch — silent on failure. */
+  async function enrichNavStackEntry(title) {
+    try {
+      const res = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      /* Find the entry in navStack and patch its article field */
+      const entry = navStack.find(e => e.title === title);
+      if (entry) {
+        entry.article = {
+          title:       data.title || title,
+          extract:     data.extract || '',
+          description: data.description || '',
+          thumbnail:   data.thumbnail?.source || null,
+          savedAt:     Date.now(),
+        };
+      }
+    } catch {
+      /* Silent — the save will still work, just without thumbnail/extract */
     }
   }
 
@@ -588,6 +622,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     backBtn.textContent = navStack.length > 1
       ? `← back · ${navStack.length - 1}`
       : '←';
+
+    /* Save button reflects whether THIS article (not the root) is saved */
+    btnSave.classList.toggle('action-btn--saved', Store.isSaved(title));
   }
 
   function navigateBack() {
@@ -739,27 +776,38 @@ document.addEventListener('DOMContentLoaded', async () => {
      SAVE
   ══════════════════════════════════════════════════════ */
 
+  /* Returns the article that should be saved — the currently
+     visible one. In reader mode that's the top of navStack
+     (which may be a deep-dived article, not the root card).
+     Outside reader mode it's the current card article.        */
+  function getActiveArticle() {
+    if (isReaderOpen && navStack.length > 0) {
+      const top = navStack[navStack.length - 1];
+      /* If we have full article data (entered from card), use it */
+      if (top.article) return top.article;
+      /* Deep-dived link — we only have the title. Build a minimal
+         save record; thumbnail/extract will be blank but title is
+         correct and the article is findable via search later.    */
+      return { title: top.title, extract: '', thumbnail: null, description: '', savedAt: Date.now() };
+    }
+    return currentArticle;
+  }
+
   btnSave.addEventListener('click', () => {
-    const saved = Store.isSaved(currentArticle?.title);
+    const active = getActiveArticle();
+    if (!active) return;
+
+    const saved = Store.isSaved(active.title);
     if (saved) {
-      Store.unsave(currentArticle.title);
+      Store.unsave(active.title);
       btnSave.classList.remove('action-btn--saved');
       showToast('Removed from saves');
     } else {
-      saveCurrentArticle();
+      Store.save(active);
+      btnSave.classList.add('action-btn--saved');
       showToast('Saved');
     }
   });
-
-  function saveCurrentArticle() {
-    if (!currentArticle) return;
-    Store.save(currentArticle);
-    btnSave.classList.add('action-btn--saved');
-  }
-
-  function flashSave() {
-    showToast('Saved');
-  }
 
   /* ══════════════════════════════════════════════════════
      GALLERY — full-screen carousel

@@ -1176,8 +1176,10 @@ document.addEventListener('DOMContentLoaded', async () => {
      but wired here unconditionally — harmless on mobile.
   ══════════════════════════════════════════════════════ */
 
-  document.getElementById('desktop-prev')\n    ?.addEventListener('click', () => { if (!isReaderOpen) goPrev(); });
-  document.getElementById('desktop-next')\n    ?.addEventListener('click', () => { if (!isReaderOpen) goNext(); });
+  document.getElementById('desktop-prev')
+    ?.addEventListener('click', () => { if (!isReaderOpen) goPrev(); });
+  document.getElementById('desktop-next')
+    ?.addEventListener('click', () => { if (!isReaderOpen) goNext(); });
 
   /* Also support keyboard arrow keys on desktop */
   document.addEventListener('keydown', e => {

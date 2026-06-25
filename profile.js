@@ -181,6 +181,12 @@ const Profile = (() => {
         await performDeleteAndSignOut();
       });
 
+    document.getElementById('btn-view-all-saves')
+      ?.addEventListener('click', () => {
+        close();
+        SavesOverlay.open();
+      });
+
     document.getElementById('btn-leaderboard')
       ?.addEventListener('click', () => {
         close();
@@ -499,24 +505,25 @@ const Profile = (() => {
     }
 
     container.innerHTML = '';
-    saves.slice(0, 30).forEach(article => {
+    /* Show only 5 in the profile — full list in the saves overlay */
+    saves.slice(0, 5).forEach(article => {
       const el = document.createElement('div');
       el.className = 'profile-save-item';
       el.innerHTML = `
         ${article.thumbnail ? `<img class="profile-save-item__thumb" src="${article.thumbnail}" alt="" loading="lazy"/>` : '<div class="profile-save-item__thumb profile-save-item__thumb--empty"></div>'}
         <div class="profile-save-item__text">
           <p class="profile-save-item__title">${escHtml(article.title)}</p>
-          <p class="profile-save-item__desc">${escHtml((article.description || '').slice(0, 60))}</p>
+          <p class="profile-save-item__desc">${escHtml((article.extract || article.description || '').slice(0, 80))}</p>
         </div>
       `;
-      /* Tapping a saved article opens it in the reader */
       el.addEventListener('click', () => {
         close();
-        /* enterReader is on app.js scope — use a custom event */
-        document.dispatchEvent(new CustomEvent('rh:openArticle', { detail: { title: article.title } }));
+        document.dispatchEvent(new CustomEvent('rh:openArticle', { detail: article }));
       });
       container.appendChild(el);
     });
+
+    /* If there are more than 5, the "view all →" button is already in HTML */
   }
 
   function setText(id, val) {
@@ -780,5 +787,88 @@ const StartupStats = (() => {
 
   return { init, maybeShow, close, shouldShow, setHidden, isHidden };
 
+
+})();
+
+/* ══════════════════════════════════════════════════════
+   SAVES OVERLAY — full list of saved articles
+   Shows all saves with summary + read more interaction
+══════════════════════════════════════════════════════ */
+
+const SavesOverlay = (() => {
+
+  function init() {
+    document.getElementById('saves-close')
+      ?.addEventListener('click', close);
+  }
+
+  function open() {
+    document.getElementById('saves-overlay')
+      ?.classList.replace('overlay--hidden', 'overlay--visible');
+    render();
+  }
+
+  function close() {
+    document.getElementById('saves-overlay')
+      ?.classList.replace('overlay--visible', 'overlay--hidden');
+  }
+
+  function render() {
+    const body  = document.getElementById('saves-overlay-body');
+    if (!body) return;
+
+    const saves = Store.getSaves();
+
+    if (saves.length === 0) {
+      body.innerHTML = '<p class="profile-saves__empty" style="padding:2rem var(--pad-x)">nothing saved yet.</p>';
+      return;
+    }
+
+    body.innerHTML = '';
+
+    saves.forEach(article => {
+      const el = document.createElement('div');
+      el.className = 'saves-card';
+      el.innerHTML = `
+        ${article.thumbnail
+          ? `<img class="saves-card__thumb" src="${escHtml(article.thumbnail)}" alt="" loading="lazy"/>`
+          : ''}
+        <div class="saves-card__body">
+          <p class="saves-card__title">${escHtml(article.title)}</p>
+          ${article.extract || article.description
+            ? `<p class="saves-card__extract">${escHtml((article.extract || article.description || '').slice(0, 200))}${(article.extract || '').length > 200 ? '…' : ''}</p>`
+            : ''}
+          <div class="saves-card__actions">
+            <button class="saves-card__readmore">read more</button>
+            <button class="saves-card__unsave">remove</button>
+          </div>
+        </div>
+      `;
+
+      el.querySelector('.saves-card__readmore').addEventListener('click', () => {
+        close();
+        document.dispatchEvent(new CustomEvent('rh:openArticle', { detail: article }));
+      });
+
+      el.querySelector('.saves-card__unsave').addEventListener('click', () => {
+        Store.unsave(article.title);
+        el.remove();
+        /* Show empty state if no more saves */
+        if (!body.querySelector('.saves-card')) {
+          body.innerHTML = '<p class="profile-saves__empty" style="padding:2rem var(--pad-x)">nothing saved yet.</p>';
+        }
+      });
+
+      body.appendChild(el);
+    });
+  }
+
+  function escHtml(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  return { init, open, close };
 
 })();

@@ -6,6 +6,7 @@ const Settings = (() => {
   const FONT_STEPS  = [85, 92, 100, 108, 116, 125]; /* % of base */
   const FONT_KEY    = 'rh_fontsize';
   const DARK_KEY    = 'rh_dark';
+  const MODE_KEY    = 'rh_default_mode';
 
   let fontIdx = 2; /* default: 100% */
 
@@ -29,8 +30,19 @@ const Settings = (() => {
       if (startupToggle && typeof StartupStats !== 'undefined') {
         startupToggle.checked = !StartupStats.isHidden();
       }
+
+      /* Default mode selector */
+      const modeSelect = document.getElementById('select-default-mode');
+      if (modeSelect) {
+        modeSelect.value = localStorage.getItem(MODE_KEY) || 'home';
+      }
     } catch {}
     applyFontSize();
+  }
+
+  /* Expose default mode for app.js boot to read */
+  function getDefaultMode() {
+    try { return localStorage.getItem(MODE_KEY) || 'home'; } catch { return 'home'; }
   }
 
   function applyFontSize() {
@@ -89,6 +101,12 @@ const Settings = (() => {
     startupStatsToggle?.addEventListener('change', () => {
       const show = startupStatsToggle.checked;
       if (typeof StartupStats !== 'undefined') StartupStats.setHidden(!show);
+    });
+
+    /* Default launch mode */
+    const modeSelect = document.getElementById('select-default-mode');
+    modeSelect?.addEventListener('change', () => {
+      try { localStorage.setItem(MODE_KEY, modeSelect.value); } catch {}
     });
 
     /* Font size +/- */
@@ -163,7 +181,7 @@ const Settings = (() => {
     t._timer = setTimeout(() => t.classList.remove('save-flash--visible'), 1800);
   }
 
-  return { init, openSettings, closeSettings, applyStored };
+  return { init, openSettings, closeSettings, applyStored, getDefaultMode };
 
 })();
 

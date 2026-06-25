@@ -205,13 +205,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   Leaderboard.init();
   Stats.init();
   StartupStats.init();
+  SavesOverlay.init();
 
   /* Init search — navigate callback opens reader for selected result */
-  Search.init(title => enterReader(title));
+  Search.init(title => ArticlePreview.open({ title, source: 'search' }));
 
-  /* Listen for profile article-open events */
+  /* Listen for profile article-open events — show preview first */
   document.addEventListener('rh:openArticle', e => {
-    enterReader(e.detail.title);
+    ArticlePreview.open(e.detail);
   });
 
   /* Init today feed */
@@ -272,9 +273,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       feedReady.then(() => {
         clearTimeout(spinnerTimer);
         splashSpinner?.classList.remove('splash__spinner--visible');
-        /* Show the startup stats glance, if not dismissed and there's
-           something worth showing — after the feed is ready so it
-           doesn't compete with the feed's own loading state */
+
+        /* Apply default launch mode from settings */
+        const defaultMode = Settings.getDefaultMode?.() || 'home';
+        if (defaultMode !== 'home') {
+          const navBtns = {
+            news:    document.getElementById('nav-news'),
+            today:   document.getElementById('nav-today'),
+            curated: document.getElementById('nav-curated'),
+          };
+          navBtns[defaultMode]?.click();
+        }
+
         StartupStats.maybeShow();
       });
     }
@@ -1166,10 +1176,8 @@ document.addEventListener('DOMContentLoaded', async () => {
      but wired here unconditionally — harmless on mobile.
   ══════════════════════════════════════════════════════ */
 
-  document.getElementById('desktop-prev')
-    ?.addEventListener('click', () => { if (!isReaderOpen) goPrev(); });
-  document.getElementById('desktop-next')
-    ?.addEventListener('click', () => { if (!isReaderOpen) goNext(); });
+  document.getElementById('desktop-prev')\n    ?.addEventListener('click', () => { if (!isReaderOpen) goPrev(); });
+  document.getElementById('desktop-next')\n    ?.addEventListener('click', () => { if (!isReaderOpen) goNext(); });
 
   /* Also support keyboard arrow keys on desktop */
   document.addEventListener('keydown', e => {
@@ -1178,6 +1186,85 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'ArrowUp'   || e.key === 'k') { if (!isReaderOpen) goPrev(); }
     if (e.key === 'Escape' && isReaderOpen)      { navigateBack(); }
   });
+
+  /* ══════════════════════════════════════════════════════
+     ARTICLE PREVIEW OVERLAY
+     Shown when opening a saved article or search result.
+     Displays summary + thumbnail with "read full article"
+     button that then opens the full reader.
+  ══════════════════════════════════════════════════════ */
+
+  const ArticlePreview = (() => {
+    const overlay   = document.getElementById('article-preview-overlay');
+    const backBtn   = document.getElementById('article-preview-back');
+    const sourceEl  = document.getElementById('article-preview-source');
+    const thumbWrap = document.getElementById('article-preview-thumb-wrap');
+    const thumbEl   = document.getElementById('article-preview-thumb');
+    const titleEl_  = document.getElementById('article-preview-title');
+    const extractEl = document.getElementById('article-preview-extract');
+    const readBtn   = document.getElementById('article-preview-readmore');
+
+    let currentTitle = null;
+
+    function open(detail) {
+      /* detail: { title, extract?, thumbnail?, description?, source? } */
+      currentTitle = detail.title;
+      const source = detail.source || 'saved';
+
+      /* Populate immediately with whatever data we have */
+      if (sourceEl) sourceEl.textContent = source === 'search' ? 'search result' : 'saved article';
+      if (titleEl_) titleEl_.textContent = detail.title || '';
+      if (extractEl) extractEl.textContent = detail.extract || detail.description || '';
+
+      if (detail.thumbnail) {
+        if (thumbEl) thumbEl.src = detail.thumbnail;
+        if (thumbWrap) thumbWrap.style.display = '';
+      } else {
+        if (thumbWrap) thumbWrap.style.display = 'none';
+        /* If no extract stored, fetch summary */
+        if (!detail.extract && detail.title) fetchSummary(detail.title);
+      }
+
+      /* If opened from saves with no extract, we may need to fetch */
+      if (!detail.extract && !detail.thumbnail && detail.title) {
+        fetchSummary(detail.title);
+      }
+
+      overlay?.classList.replace('overlay--hidden', 'overlay--visible');
+    }
+
+    async function fetchSummary(title) {
+      try {
+        const res  = await fetch(
+          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (extractEl && !extractEl.textContent) {
+          extractEl.textContent = data.extract || '';
+        }
+        if (data.thumbnail?.source && thumbWrap && thumbEl) {
+          thumbEl.src = data.thumbnail.source;
+          thumbWrap.style.display = '';
+        }
+      } catch {}
+    }
+
+    function close() {
+      overlay?.classList.replace('overlay--visible', 'overlay--hidden');
+      currentTitle = null;
+    }
+
+    backBtn?.addEventListener('click', close);
+
+    readBtn?.addEventListener('click', () => {
+      if (!currentTitle) return;
+      close();
+      enterReader(currentTitle);
+    });
+
+    return { open, close };
+  })();
 
   /* ══════════════════════════════════════════════════════
      UTILS

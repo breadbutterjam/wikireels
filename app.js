@@ -1261,7 +1261,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     readBtn?.addEventListener('click', () => {
       if (!currentTitle) return;
-      close();
+      /* Close preview and all other overlays so the reader
+         opens cleanly without stacked overlays behind it */
+      closeAllOverlays();
       enterReader(currentTitle);
     });
 
@@ -1271,6 +1273,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ══════════════════════════════════════════════════════
      UTILS
   ══════════════════════════════════════════════════════ */
+
+  /* Close every named overlay — used before opening the reader from
+     contexts like saves or search so nothing stacks underneath */
+  function closeAllOverlays() {
+    [
+      'profile-overlay',
+      'saves-overlay',
+      'article-preview-overlay',
+      'leaderboard-overlay',
+      'stats-overlay',
+      'settings',
+    ].forEach(id => {
+      document.getElementById(id)
+        ?.classList.replace('overlay--visible', 'overlay--hidden');
+    });
+    /* Also close profile/leaderboard/stats via their own close fns
+       so any internal state is properly reset */
+    if (typeof Profile    !== 'undefined') Profile.close?.();
+    if (typeof SavesOverlay !== 'undefined') SavesOverlay.close?.();
+  }
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 

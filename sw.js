@@ -4,7 +4,7 @@
    requires network — this is intentional for now (see
    roadmap: downloadable articles for true offline reading). */
 
-const CACHE_VERSION = 'rh-shell-v1';
+const CACHE_VERSION = 'rh-shell-v2';
 
 /* Files that make up the app shell — everything needed for the
    app to boot and render its chrome, even with no network. */

@@ -12,6 +12,13 @@ const Settings = (() => {
 
   /* ── Read saved prefs on load ── */
   function applyStored() {
+    /* Version number — single source of truth from version.js */
+    const ver = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '';
+    const splashV   = document.getElementById('splash-version');
+    const settingsV = document.getElementById('settings-version');
+    if (splashV)   splashV.textContent   = ver;
+    if (settingsV) settingsV.textContent = ver;
+
     try {
       const fi = localStorage.getItem(FONT_KEY);
       if (fi !== null) fontIdx = parseInt(fi, 10);

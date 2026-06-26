@@ -475,6 +475,7 @@
     <p class="splash__wordmark">rabbit hole</p>
     <p class="splash__tagline">wikipedia, one swipe at a time</p>
     <div class="splash__spinner" id="splash-spinner"></div>
+    <p class="splash__version" id="splash-version"></p>
   </div>
 
   <!-- ── SIGN-IN NUDGE ──────────────────────────────────────── -->
@@ -624,16 +625,6 @@
             <span class="settings__toggle-track"></span>
           </label>
         </div>
-
-        <div class="settings__row">
-          <span class="settings__row-label">default section on launch</span>
-          <select class="settings__select" id="select-default-mode">
-            <option value="home">Home</option>
-            <option value="news">News</option>
-            <option value="today">Today</option>
-            <option value="curated">Curated</option>
-          </select>
-        </div>
       </section>
 
       <!-- Data -->
@@ -660,6 +651,7 @@
       <section class="settings__section settings__section--about">
         <p class="settings__about">rabbit hole · built on wikipedia</p>
         <button class="settings__show-onboarding" id="settings-show-onboarding">show tutorial again</button>
+        <p class="settings__version" id="settings-version"></p>
       </section>
 
     </div>
@@ -724,7 +716,6 @@
         <div class="profile-saves-header">
           <p class="profile-section-label">saved articles</p>
           <div class="profile-saves-header__links">
-            <button class="profile-leaderboard-link" id="btn-view-all-saves">view all →</button>
             <button class="profile-leaderboard-link" id="btn-detailed-stats">stats →</button>
             <button class="profile-leaderboard-link" id="btn-leaderboard">leaderboard →</button>
           </div>
@@ -905,33 +896,7 @@
        or loaded from firebase-config.js locally (see firebase-config.example.js) -->
   <script src="firebase-config.js"></script>
 
-  <!-- ── SAVED ARTICLES OVERLAY ───────────────────────────── -->
-  <div id="saves-overlay" class="profile-overlay overlay overlay--hidden" role="dialog" aria-modal="true" aria-label="Saved articles">
-    <div class="profile-overlay__header">
-      <button class="profile-overlay__close" id="saves-close" aria-label="Close">←</button>
-      <span class="profile-overlay__title">saved articles</span>
-    </div>
-    <div class="profile-overlay__body" id="saves-overlay-body">
-      <p class="profile-saves__empty">nothing saved yet.</p>
-    </div>
-  </div>
-
-  <!-- ── ARTICLE PREVIEW OVERLAY (saves + search) ─────────── -->
-  <div id="article-preview-overlay" class="article-preview overlay overlay--hidden" role="dialog" aria-modal="true" aria-label="Article preview">
-    <div class="article-preview__header">
-      <button class="article-preview__back" id="article-preview-back" aria-label="Close">←</button>
-      <span class="article-preview__source" id="article-preview-source"></span>
-    </div>
-    <div class="article-preview__body">
-      <div class="article-preview__thumb-wrap" id="article-preview-thumb-wrap" style="display:none">
-        <img class="article-preview__thumb" id="article-preview-thumb" src="" alt=""/>
-      </div>
-      <h1 class="article-preview__title" id="article-preview-title"></h1>
-      <p class="article-preview__extract" id="article-preview-extract"></p>
-      <button class="article-preview__readmore" id="article-preview-readmore">read full article</button>
-    </div>
-  </div>
-
+  <script src="version.js"></script>
   <script src="store.js"></script>
   <script src="categories.js"></script>
   <script src="api.js"></script>

@@ -2003,7 +2003,7 @@ button {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  z-index: 180;
+  z-index: 400;  /* above all overlays (300) so always visible */
   cursor: pointer;
   border: none;
   transition:
@@ -2044,7 +2044,7 @@ button {
   position: fixed;
   bottom: calc(var(--safe-bottom) + 1.8rem);
   left: 1rem;
-  z-index: 181;
+  z-index: 401;
   display: flex;
   flex-direction: row;
   gap: 0.25rem;
@@ -3961,7 +3961,9 @@ body.dark .nav-menu__item {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 1.5rem var(--pad-x) calc(var(--safe-bottom) + 5rem);
+  padding: 1.5rem var(--pad-x) calc(var(--safe-bottom) + 3rem);
+  display: flex;
+  flex-direction: column;
 }
 
 .article-preview__thumb-wrap {
@@ -3992,26 +3994,29 @@ body.dark .nav-menu__item {
   font-size: 0.88rem;
   line-height: 1.65;
   color: var(--c-ink-muted);
-  margin: 0 0 1.75rem;
+  margin: 0;
+  flex: 1; /* pushes readmore to the bottom */
 }
 
+/* Styled as a text link, sits at the bottom of the body */
 .article-preview__readmore {
-  display: block;
-  width: 100%;
-  padding: 0.9rem;
-  background: var(--c-ink);
-  color: var(--c-bg);
+  display: inline-block;
+  margin-top: 2rem;
+  padding: 0;
+  background: none;
   border: none;
   font-family: var(--f-sans);
   font-size: 0.82rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: var(--c-accent);
   cursor: pointer;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--c-accent);
+  padding-bottom: 0.1rem;
+  align-self: flex-start;
   transition: opacity var(--dur-fast);
 }
 
-.article-preview__readmore:active { opacity: 0.8; }
+.article-preview__readmore:active { opacity: 0.6; }
 
 /* ═══════════════════════════════════════════════════════════
    SAVES OVERLAY — full saves list cards

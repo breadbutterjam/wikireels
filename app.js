@@ -1206,16 +1206,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     const extractEl = document.getElementById('article-preview-extract');
     const readBtn   = document.getElementById('article-preview-readmore');
 
-    let currentTitle = null;
+    let currentTitle  = null;
+    let savesList     = [];   /* populated when source is 'saved' */
+    let savesIndex    = -1;   /* current position in savesList    */
+    let currentSource = 'saved';
 
     function open(detail) {
-      /* detail: { title, extract?, thumbnail?, description?, source? } */
-      currentTitle = detail.title;
-      const source = detail.source || 'saved';
+      currentTitle  = detail.title;
+      currentSource = detail.source || 'saved';
 
-      /* Populate immediately with whatever data we have */
-      if (sourceEl) sourceEl.textContent = source === 'search' ? 'search result' : 'saved article';
-      if (titleEl_) titleEl_.textContent = detail.title || '';
+      /* When opening from saves, build the navigation list */
+      if (currentSource === 'saved') {
+        savesList  = Store.getSaves();
+        savesIndex = savesList.findIndex(a => a.title === detail.title);
+      } else {
+        savesList  = [];
+        savesIndex = -1;
+      }
+
+      populate(detail);
+      overlay?.classList.replace('overlay--hidden', 'overlay--visible');
+    }
+
+    function populate(detail) {
+      currentTitle = detail.title;
+
+      if (sourceEl) {
+        if (currentSource === 'search') {
+          sourceEl.textContent = 'search result';
+        } else if (savesList.length > 1 && savesIndex >= 0) {
+          sourceEl.textContent = `saved · ${savesIndex + 1} of ${savesList.length}`;
+        } else {
+          sourceEl.textContent = 'saved article';
+        }
+      }
+
+      if (titleEl_)  titleEl_.textContent  = detail.title || '';
       if (extractEl) extractEl.textContent = detail.extract || detail.description || '';
 
       if (detail.thumbnail) {
@@ -1223,16 +1249,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (thumbWrap) thumbWrap.style.display = '';
       } else {
         if (thumbWrap) thumbWrap.style.display = 'none';
-        /* If no extract stored, fetch summary */
-        if (!detail.extract && detail.title) fetchSummary(detail.title);
       }
 
-      /* If opened from saves with no extract, we may need to fetch */
-      if (!detail.extract && !detail.thumbnail && detail.title) {
+      /* Fetch summary if we're missing content */
+      if ((!detail.extract && !detail.description) || !detail.thumbnail) {
         fetchSummary(detail.title);
       }
+    }
 
-      overlay?.classList.replace('overlay--hidden', 'overlay--visible');
+    function goToSave(index) {
+      if (index < 0 || index >= savesList.length) return;
+      savesIndex = index;
+      populate(savesList[index]);
     }
 
     async function fetchSummary(title) {
@@ -1254,18 +1282,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function close() {
       overlay?.classList.replace('overlay--visible', 'overlay--hidden');
-      currentTitle = null;
+      currentTitle  = null;
+      savesList     = [];
+      savesIndex    = -1;
     }
 
     backBtn?.addEventListener('click', close);
 
     readBtn?.addEventListener('click', () => {
       if (!currentTitle) return;
-      /* Close preview and all other overlays so the reader
-         opens cleanly without stacked overlays behind it */
       closeAllOverlays();
       enterReader(currentTitle);
     });
+
+    /* Swipe up → next save, swipe down → previous save
+       Only active when browsing saves, not search results */
+    let swipeStartX = 0, swipeStartY = 0;
+
+    overlay?.addEventListener('touchstart', e => {
+      swipeStartX = e.touches[0].clientX;
+      swipeStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    overlay?.addEventListener('touchend', e => {
+      if (currentSource !== 'saved' || savesList.length <= 1) return;
+      const dx = e.changedTouches[0].clientX - swipeStartX;
+      const dy = e.changedTouches[0].clientY - swipeStartY;
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 50) {
+        if (dy < 0 && savesIndex < savesList.length - 1) goToSave(savesIndex + 1);  /* swipe up → next */
+        if (dy > 0 && savesIndex > 0)                     goToSave(savesIndex - 1); /* swipe down → prev */
+      }
+    }, { passive: true });
 
     return { open, close };
   })();

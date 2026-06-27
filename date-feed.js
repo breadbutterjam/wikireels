@@ -146,6 +146,14 @@ const DateFeed = (() => {
     if (section === 'picture')   renderPicture(data);
   }
 
+  /* ── Clean a Wikipedia API title — replaces underscores with spaces
+        and decodes any percent-encoded characters ── */
+  function cleanTitle(title) {
+    if (!title) return '';
+    try { return decodeURIComponent(title).replace(/_/g, ' '); }
+    catch { return title.replace(/_/g, ' '); }
+  }
+
   /* ── ON THIS DAY ── */
   function renderOTD(data) {
     const raw = (data.onthisday || []).sort((a, b) => b.year - a.year);
@@ -154,7 +162,7 @@ const DateFeed = (() => {
       return {
         year:      item.year,
         text:      item.text || '',
-        title:     link.title || '',
+        title:     cleanTitle(link.title),
         extract:   link.extract || item.text || '',
         thumbnail: link.thumbnail?.source || null,
         url:       link.content_urls?.desktop?.page || '',
@@ -339,20 +347,22 @@ const DateFeed = (() => {
     const tfa = data.tfa;
     if (!tfa) { card.innerHTML = '<p class="date-empty">No featured article today.</p>'; return; }
 
+    const tfaTitle = cleanTitle(tfa.title);
+
     card.innerHTML = `
       ${tfa.thumbnail ? `<div class="date-single-card__thumb"><img src="${tfa.thumbnail.source}" alt=""/></div>` : ''}
       <div class="date-single-card__body">
         <div class="card__meta"><span class="card__category">Featured Article</span></div>
-        <h1 class="card__title">${escHtml(tfa.title)}</h1>
+        <h1 class="card__title">${escHtml(tfaTitle)}</h1>
         <div class="card__body"><p>${escHtml(summarise(tfa.extract, 400))}</p></div>
         <button class="date-single-card__link" id="featured-read-more">read full article →</button>
       </div>
       <div class="date-featured-reader" id="featured-reader" aria-hidden="true">
         <div class="today-card__reader-header">
           <button class="card__back" id="featured-reader-back">←</button>
-          <span class="today-card__reader-title-sm">${escHtml(tfa.title)}</span>
+          <span class="today-card__reader-title-sm">${escHtml(tfaTitle)}</span>
         </div>
-        <h1 class="today-card__reader-h1">${escHtml(tfa.title)}</h1>
+        <h1 class="today-card__reader-h1">${escHtml(tfaTitle)}</h1>
         <div class="today-card__reader-body" id="featured-reader-body"></div>
       </div>
     `;
@@ -365,7 +375,7 @@ const DateFeed = (() => {
       reader.scrollTop = 0;
 
       try {
-        const html = await API.fetchFullHTML(tfa.title);
+        const html = await API.fetchFullHTML(tfa.title); /* use original title for API */
         body.innerHTML = cleanHTML(html);
       } catch {
         const url = tfa.content_urls?.desktop?.page || '#';

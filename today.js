@@ -38,6 +38,13 @@ const Today = (() => {
     return d;
   }
 
+  /* Clean Wikipedia API title — underscores to spaces, decode percent-encoding */
+  function cleanTitle(title) {
+    if (!title) return '';
+    try { return decodeURIComponent(title).replace(/_/g, ' '); }
+    catch { return title.replace(/_/g, ' '); }
+  }
+
   function summarise(text, max = 300) {
     if (!text || text.length <= max) return text;
     const cut = text.slice(0, max);
@@ -121,7 +128,7 @@ const Today = (() => {
       if (!story) continue;
 
       const link  = (item.links || [])[0] || {};
-      const title = link.title || 'In the News';
+      const title = cleanTitle(link.title) || 'In the News';
 
       items.push({
         title,

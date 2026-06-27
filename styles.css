@@ -4000,22 +4000,25 @@ body.dark .nav-menu__item {
 }
 
 .article-preview__readmore {
-  display: block;
-  width: 100%;
-  padding: 0.9rem;
-  background: var(--c-ink);
-  color: var(--c-bg);
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0.4rem 0;
+  background: none;
   border: none;
   font-family: var(--f-sans);
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: var(--fs-ui);
+  font-weight: 400;
+  color: var(--c-ink-muted);
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  opacity: 0.6;
   cursor: pointer;
-  transition: opacity var(--dur-fast);
+  transition: opacity var(--dur-fast) var(--ease-smooth);
+  align-self: center;
+  width: auto;
 }
 
-.article-preview__readmore:active { opacity: 0.8; }
+.article-preview__readmore::after { content: " →"; opacity: 0.6; }
+.article-preview__readmore:active { opacity: 1; }
 
 /* ═══════════════════════════════════════════════════════════
    SAVES OVERLAY — full saves list cards

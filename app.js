@@ -1213,33 +1213,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     const extractEl = document.getElementById('article-preview-extract');
     const readBtn   = document.getElementById('article-preview-readmore');
 
-    let currentTitle = null;
+    let currentTitle  = null;
+    let currentSource = 'saved';
+    let savesList     = [];
+    let savesIndex    = -1;
+
+    /* Touch tracking for swipe navigation */
+    let swipeStartX = 0, swipeStartY = 0;
 
     function open(detail) {
-      /* detail: { title, extract?, thumbnail?, description?, source? } */
-      currentTitle = detail.title;
-      const source = detail.source || 'saved';
+      currentSource = detail.source || 'saved';
+      currentTitle  = detail.title;
 
-      /* Populate immediately with whatever data we have */
-      if (sourceEl) sourceEl.textContent = source === 'search' ? 'search result' : 'saved article';
-      if (titleEl_) titleEl_.textContent = detail.title || '';
+      /* Build saves list for swipe navigation when coming from profile saves */
+      if (currentSource === 'saved') {
+        savesList  = Store.getSaves();
+        savesIndex = savesList.findIndex(a => a.title === detail.title);
+      } else {
+        savesList  = [];
+        savesIndex = -1;
+      }
+
+      populate(detail);
+      overlay?.classList.replace('overlay--hidden', 'overlay--visible');
+    }
+
+    function populate(detail) {
+      currentTitle = detail.title;
+
+      /* Source label — shows position counter when swiping saves */
+      if (sourceEl) {
+        if (currentSource === 'search') {
+          sourceEl.textContent = 'search result';
+        } else if (savesList.length > 1 && savesIndex >= 0) {
+          sourceEl.textContent = `saved · ${savesIndex + 1} of ${savesList.length}`;
+        } else {
+          sourceEl.textContent = 'saved article';
+        }
+      }
+
+      if (titleEl_)  titleEl_.textContent  = detail.title || '';
       if (extractEl) extractEl.textContent = detail.extract || detail.description || '';
 
       if (detail.thumbnail) {
-        if (thumbEl) thumbEl.src = detail.thumbnail;
+        if (thumbEl)   thumbEl.src = detail.thumbnail;
         if (thumbWrap) thumbWrap.style.display = '';
       } else {
         if (thumbWrap) thumbWrap.style.display = 'none';
-        /* If no extract stored, fetch summary */
-        if (!detail.extract && detail.title) fetchSummary(detail.title);
       }
 
-      /* If opened from saves with no extract, we may need to fetch */
-      if (!detail.extract && !detail.thumbnail && detail.title) {
+      /* Fetch if missing extract or thumbnail */
+      if ((!detail.extract && !detail.description) || !detail.thumbnail) {
         fetchSummary(detail.title);
       }
+    }
 
-      overlay?.classList.replace('overlay--hidden', 'overlay--visible');
+    function goToSave(index) {
+      if (index < 0 || index >= savesList.length) return;
+      savesIndex = index;
+      populate(savesList[index]);
     }
 
     async function fetchSummary(title) {
@@ -1249,6 +1281,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
         if (!res.ok) return;
         const data = await res.json();
+        /* Only update if this fetch is still for the current article */
+        if (title !== currentTitle) return;
         if (extractEl && !extractEl.textContent) {
           extractEl.textContent = data.extract || '';
         }
@@ -1261,18 +1295,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function close() {
       overlay?.classList.replace('overlay--visible', 'overlay--hidden');
-      currentTitle = null;
+      currentTitle  = null;
+      savesList     = [];
+      savesIndex    = -1;
     }
 
-    backBtn?.addEventListener('click', close);
+    /* Back button — return to profile instantly (no slide animation)
+       when coming from saves, or just close for search results */
+    backBtn?.addEventListener('click', () => {
+      if (currentSource === 'saved') {
+        /* Show profile beneath before preview slides away */
+        const profileOverlay = document.getElementById('profile-overlay');
+        if (profileOverlay) {
+          profileOverlay.classList.add('overlay--instant');
+          profileOverlay.classList.replace('overlay--hidden', 'overlay--visible');
+          Profile.refresh();
+          requestAnimationFrame(() => profileOverlay.classList.remove('overlay--instant'));
+        }
+      }
+      close();
+    });
 
     readBtn?.addEventListener('click', () => {
       if (!currentTitle) return;
-      /* Close preview and all other overlays so the reader
-         opens cleanly without stacked overlays behind it */
       closeAllOverlays();
       enterReader(currentTitle);
     });
+
+    /* Swipe up → next save, swipe down → previous save */
+    overlay?.addEventListener('touchstart', e => {
+      swipeStartX = e.touches[0].clientX;
+      swipeStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    overlay?.addEventListener('touchend', e => {
+      if (currentSource !== 'saved' || savesList.length <= 1) return;
+      const dx = e.changedTouches[0].clientX - swipeStartX;
+      const dy = e.changedTouches[0].clientY - swipeStartY;
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 50) {
+        if (dy < 0 && savesIndex < savesList.length - 1) goToSave(savesIndex + 1);
+        if (dy > 0 && savesIndex > 0)                    goToSave(savesIndex - 1);
+      }
+    }, { passive: true });
 
     return { open, close };
   })();

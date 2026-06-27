@@ -1645,6 +1645,15 @@ body.dark .gallery__track {
 
 .settings__show-onboarding:active { color: var(--c-ink); }
 
+.splash__version{
+  font-family: var(--f-sans);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--c-ink-faint);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
 .settings__version {
   font-family: var(--f-sans);
   font-size: 0.62rem;

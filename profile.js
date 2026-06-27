@@ -787,7 +787,11 @@ const SavesOverlay = (() => {
 
   function init() {
     document.getElementById('saves-close')
-      ?.addEventListener('click', close);
+      ?.addEventListener('click', () => {
+        close();
+        /* Return to profile rather than bare feed */
+        Profile.open();
+      });
   }
 
   function open() {

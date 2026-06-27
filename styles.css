@@ -896,7 +896,7 @@ button {
   font-family: var(--f-sans);
   font-size: 0.68rem;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   color: var(--c-ink-faint);
 }
 
@@ -1204,7 +1204,7 @@ button {
   font-family: var(--f-sans);
   font-size: 0.65rem;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   color: var(--c-ink-faint);
 }
 
@@ -1641,6 +1641,15 @@ button {
 .settings__show-onboarding:active { color: var(--c-ink); }
 
 .settings__version {
+  font-family: var(--f-sans);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--c-ink-faint);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.splash__version{
   font-family: var(--f-sans);
   font-size: 0.62rem;
   letter-spacing: 0.08em;

@@ -904,6 +904,33 @@
   <script src="profile.js"></script>
   <script src="settings.js"></script>
   <script src="search.js"></script>
+  <!-- ── SAVED ARTICLES OVERLAY ───────────────────────────── -->
+  <div id="saves-overlay" class="profile-overlay overlay overlay--hidden" role="dialog" aria-modal="true" aria-label="Saved articles">
+    <div class="profile-overlay__header">
+      <button class="profile-overlay__close" id="saves-close" aria-label="Close">←</button>
+      <span class="profile-overlay__title">saved articles</span>
+    </div>
+    <div class="profile-overlay__body" id="saves-overlay-body">
+      <p class="profile-saves__empty">nothing saved yet.</p>
+    </div>
+  </div>
+
+  <!-- ── ARTICLE PREVIEW OVERLAY (saves + search) ─────────── -->
+  <div id="article-preview-overlay" class="article-preview overlay overlay--hidden" role="dialog" aria-modal="true" aria-label="Article preview">
+    <div class="article-preview__header">
+      <button class="article-preview__back" id="article-preview-back" aria-label="Close">←</button>
+      <span class="article-preview__source" id="article-preview-source"></span>
+    </div>
+    <div class="article-preview__body">
+      <div class="article-preview__thumb-wrap" id="article-preview-thumb-wrap" style="display:none">
+        <img class="article-preview__thumb" id="article-preview-thumb" src="" alt=""/>
+      </div>
+      <h1 class="article-preview__title" id="article-preview-title"></h1>
+      <p class="article-preview__extract" id="article-preview-extract"></p>
+      <button class="article-preview__readmore" id="article-preview-readmore">read full article →</button>
+    </div>
+  </div>
+
   <script src="today.js"></script>
   <script src="date-feed.js"></script>
   <script src="curated.js"></script>

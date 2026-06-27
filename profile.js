@@ -187,19 +187,7 @@ const Profile = (() => {
         SavesOverlay.open();
       });
 
-    document.getElementById('btn-leaderboard')
-      ?.addEventListener('click', () => {
-        close();
-        Leaderboard.open();
-      });
-
-    document.getElementById('btn-detailed-stats')
-      ?.addEventListener('click', () => {
-        close();
-        Stats.open();
-      });
-
-    /* Top bar direct-access icons (same destinations as the in-profile links) */
+    /* Top bar direct-access icons */
     document.getElementById('btn-stats-topbar')
       ?.addEventListener('click', () => Stats.open());
 

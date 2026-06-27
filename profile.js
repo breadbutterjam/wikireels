@@ -835,7 +835,9 @@ const SavesOverlay = (() => {
 
       el.querySelector('.saves-card__readmore').addEventListener('click', () => {
         close();
-        document.dispatchEvent(new CustomEvent('rh:openArticle', { detail: article }));
+        /* Go directly to full reader — skip the summary/preview step.
+           Summary is only shown when opening from the profile's 5-item list. */
+        document.dispatchEvent(new CustomEvent('rh:enterReader', { detail: { title: article.title } }));
       });
 
       el.querySelector('.saves-card__unsave').addEventListener('click', () => {

@@ -2,4 +2,4 @@
    Update this string on every meaningful release.
    Referenced by splash screen and settings pane.            */
 
-const APP_VERSION = 'v0.0.3';
+const APP_VERSION = 'v0.0.4';

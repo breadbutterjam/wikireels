@@ -1640,6 +1640,39 @@ button {
 
 .settings__show-onboarding:active { color: var(--c-ink); }
 
+.settings__version {
+  font-family: var(--f-sans);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--c-ink-faint);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.settings__select {
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  color: var(--c-ink);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border-mid);
+  padding: 0.3rem 1.5rem 0.3rem 0.6rem;
+  cursor: pointer;
+  outline: none;
+  letter-spacing: 0.02em;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.4rem center;
+  background-color: var(--c-bg);
+}
+
+body.dark .settings__select {
+  background-color: var(--c-surface);
+  color: var(--c-ink);
+  border-color: var(--c-border-mid);
+}
+
 /* ── Font scale application ── */
 /* Applied to reading surfaces only, not UI chrome */
 .card__body,

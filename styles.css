@@ -524,6 +524,10 @@ button {
 .overlay--hidden  { transform: translateX(100%); pointer-events: none; }
 .overlay--visible { transform: translateX(0);    pointer-events: all;  }
 
+/* Skip transition when an overlay should appear instantly beneath another
+   that is sliding away — prevents the double-slide visual */
+.overlay--instant { transition: none !important; }
+
 #gallery {
   background: var(--c-ink);
   display: flex;
@@ -1221,18 +1225,6 @@ button {
   opacity: 1;
 }
 
-.splash__version {
-  position: absolute;
-  bottom: calc(var(--safe-bottom) + 1.25rem);
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-family: var(--f-sans);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  color: var(--c-ink-faint);
-}
-
 /* ═══════════════════════════════════════════════════════════
    ONBOARDING MODAL — two-page paginated
 ═══════════════════════════════════════════════════════════ */
@@ -1648,15 +1640,6 @@ button {
 
 .settings__show-onboarding:active { color: var(--c-ink); }
 
-.settings__version {
-  font-family: var(--f-sans);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  color: var(--c-ink-faint);
-  text-align: center;
-  margin-top: 0.5rem;
-}
-
 /* ── Font scale application ── */
 /* Applied to reading surfaces only, not UI chrome */
 .card__body,
@@ -2024,7 +2007,7 @@ button {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  z-index: 400;  /* above all overlays (300) so always visible */
+  z-index: 180;
   cursor: pointer;
   border: none;
   transition:
@@ -2065,7 +2048,7 @@ button {
   position: fixed;
   bottom: calc(var(--safe-bottom) + 1.8rem);
   left: 1rem;
-  z-index: 401;
+  z-index: 181;
   display: flex;
   flex-direction: row;
   gap: 0.25rem;
@@ -3982,9 +3965,7 @@ body.dark .nav-menu__item {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 1.5rem var(--pad-x) calc(var(--safe-bottom) + 3rem);
-  display: flex;
-  flex-direction: column;
+  padding: 1.5rem var(--pad-x) calc(var(--safe-bottom) + 5rem);
 }
 
 .article-preview__thumb-wrap {
@@ -4015,29 +3996,26 @@ body.dark .nav-menu__item {
   font-size: 0.88rem;
   line-height: 1.65;
   color: var(--c-ink-muted);
-  margin: 0;
-  flex: 1; /* pushes readmore to the bottom */
+  margin: 0 0 1.75rem;
 }
 
-/* Styled as a text link, sits at the bottom of the body */
 .article-preview__readmore {
-  display: inline-block;
-  margin-top: 2rem;
-  padding: 0;
-  background: none;
+  display: block;
+  width: 100%;
+  padding: 0.9rem;
+  background: var(--c-ink);
+  color: var(--c-bg);
   border: none;
   font-family: var(--f-sans);
   font-size: 0.82rem;
-  color: var(--c-accent);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
-  letter-spacing: 0.03em;
-  border-bottom: 1px solid var(--c-accent);
-  padding-bottom: 0.1rem;
-  align-self: flex-start;
   transition: opacity var(--dur-fast);
 }
 
-.article-preview__readmore:active { opacity: 0.6; }
+.article-preview__readmore:active { opacity: 0.8; }
 
 /* ═══════════════════════════════════════════════════════════
    SAVES OVERLAY — full saves list cards

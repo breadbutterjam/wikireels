@@ -788,9 +788,21 @@ const SavesOverlay = (() => {
   function init() {
     document.getElementById('saves-close')
       ?.addEventListener('click', () => {
+        /* 1. Make profile visible instantly — no slide-in animation —
+              so it sits underneath the saves overlay as it closes */
+        const profileOverlay = document.getElementById('profile-overlay');
+        if (profileOverlay) {
+          profileOverlay.classList.add('overlay--instant');
+          profileOverlay.classList.replace('overlay--hidden', 'overlay--visible');
+          Profile.refresh(); /* ensure content is populated */
+          /* Re-enable transitions on next frame so future opens animate normally */
+          requestAnimationFrame(() => {
+            profileOverlay.classList.remove('overlay--instant');
+          });
+        }
+
+        /* 2. Slide saves overlay away to the right */
         close();
-        /* Return to profile rather than bare feed */
-        Profile.open();
       });
   }
 

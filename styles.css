@@ -604,6 +604,7 @@ body.dark .gallery__track {
   align-items: center;
   justify-content: center;
   padding: calc(var(--safe-top) + 3.5rem) var(--pad-x) calc(var(--safe-bottom) + 5rem);
+  background: var(--c-surface-dark); /* ensure dark bg on every slide, not just track */
 }
 
 .gallery__slide img {

@@ -567,11 +567,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /* Push to stack — include article data if entering from card (title===null),
-       otherwise it's a deep-dive link and we only have the title for now */
+       otherwise it's a deep-dive link or external entry (saves/search) */
     navStack.push({
-      title:   articleTitle,
+      title:     articleTitle,
       scrollTop: 0,
-      article: title ? null : currentArticle,  /* null for deep-dive links */
+      article:   title ? null : currentArticle,
+      _external: title !== null, /* true = entered from saves/search, not feed card */
     });
     Store.recordDepth(navStack.length);
     updateReaderHeader(articleTitle);
@@ -630,8 +631,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateReaderHeader(title) {
     readerTitleEl.textContent   = title;
     readerTitleSmEl.textContent = title;
-    /* Category only meaningful for the root article */
-    readerCatEl.textContent = navStack.length <= 1
+    /* Category only meaningful for the root article when entered from the feed.
+       When entering from saves/search (title explicitly passed), clear it. */
+    readerCatEl.textContent = (navStack.length <= 1 && !navStack[0]?._external)
       ? (currentArticle?.description || '')
       : '';
 

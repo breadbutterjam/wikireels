@@ -4,7 +4,7 @@
   "description": "one swipe at a time.",
   "start_url": "./index.html",
   "scope": "./",
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f7f5f0",
   "theme_color": "#f7f5f0",

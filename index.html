@@ -123,6 +123,13 @@
           <span class="card__reader-category" id="reader-cat"></span>
           <span class="card__reader-title-small" id="reader-title-small"></span>
         </div>
+        <button class="card__toc-btn" id="btn-toc" aria-label="Table of contents">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="15" y2="12"/>
+            <line x1="3" y1="18" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
 
       <!-- ── SUMMARY VIEW ── -->
@@ -213,7 +220,7 @@
         <optgroup label="Mumbai">
           <option value="https://www.mid-day.com/Resources/midday/rss/mumbai-news.xml">Mid-Day</option>
           <option value="https://www.hindustantimes.com/feeds/rss/cities/mumbai-news/rssfeed.xml">Hindustan Times</option>
-          <!-- <option value="https://www.freepressjournal.in/rss/mumbai">Free Press Journal</option> -->
+          <option value="https://www.freepressjournal.in/rss/mumbai">Free Press Journal</option>
         </optgroup>
         <optgroup label="Sports">
           <option value="https://www.espncricinfo.com/rss/content/story/feeds/0.xml">ESPNcricinfo — Global</option>
@@ -686,6 +693,10 @@
             <p class="profile-account__email" id="profile-email"></p>
           </div>
         </div>
+        <!-- Shown only for guest users -->
+        <button class="profile-change-guest-btn profile-section--hidden" id="btn-change-guest-identity">
+          change avatar &amp; name
+        </button>
       </div>
 
       <!-- Stats: always shown -->
@@ -938,6 +949,31 @@
       <h1 class="article-preview__title" id="article-preview-title"></h1>
       <p class="article-preview__extract" id="article-preview-extract"></p>
       <button class="article-preview__readmore" id="article-preview-readmore">read full article →</button>
+    </div>
+  </div>
+
+  <!-- ── TABLE OF CONTENTS SHEET ──────────────────────────── -->
+  <div id="toc-sheet" class="toc-sheet toc-sheet--hidden" role="dialog" aria-label="Contents">
+    <div class="toc-sheet__bar"></div>
+    <div class="toc-sheet__header">
+      <p class="toc-sheet__title">contents</p>
+      <button class="toc-sheet__close" id="toc-close">✕</button>
+    </div>
+    <div class="toc-sheet__list" id="toc-list">
+      <p class="toc-sheet__loading">Loading…</p>
+    </div>
+  </div>
+  <div class="toc-sheet__backdrop" id="toc-backdrop"></div>
+
+  <!-- ── GUEST IDENTITY PICKER ─────────────────────────────── -->
+  <div id="guest-picker-overlay" class="profile-overlay overlay overlay--hidden" role="dialog" aria-modal="true" aria-label="Change avatar and name">
+    <div class="profile-overlay__header">
+      <button class="profile-overlay__close" id="guest-picker-close" aria-label="Close">←</button>
+      <span class="profile-overlay__title">choose your look</span>
+    </div>
+    <div class="profile-overlay__body">
+      <p class="guest-picker__hint">tap an animal to update your avatar and name</p>
+      <div class="guest-picker__grid" id="guest-picker-grid"></div>
     </div>
   </div>
 

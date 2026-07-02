@@ -206,6 +206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   Stats.init();
   StartupStats.init();
   SavesOverlay.init();
+  GuestPicker.init();
 
   /* Init search — navigate callback opens reader for selected result */
   Search.init(title => ArticlePreview.open({ title, source: 'search' }));
@@ -666,6 +667,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     cardCurrent.classList.remove('card--reader');
     isReaderOpen = false;
     navStack = [];
+    /* Close TOC if open */
+    if (typeof TOC !== 'undefined') TOC.close();
     setTimeout(() => {
       readerBodyEl.innerHTML      = '';
       readerTitleEl.textContent   = '';
@@ -1349,6 +1352,113 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* Close every named overlay — used before opening the reader from
      contexts like saves or search so nothing stacks underneath */
+  /* ══════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+     Fetches section headings via MediaWiki action API,
+     renders as a slide-up sheet, tap to scroll reader.
+  ══════════════════════════════════════════════════════ */
+
+  const TOC = (() => {
+    const sheet    = document.getElementById('toc-sheet');
+    const backdrop = document.getElementById('toc-backdrop');
+    const list     = document.getElementById('toc-list');
+    const closeBtn = document.getElementById('toc-close');
+    const tocBtn   = document.getElementById('btn-toc');
+
+    let currentTitle = null;
+
+    function open(title) {
+      if (!sheet) return;
+      currentTitle = title;
+      sheet.classList.replace('toc-sheet--hidden', 'toc-sheet--visible');
+      backdrop.classList.add('toc-sheet__backdrop--visible');
+      list.innerHTML = '<p class="toc-sheet__loading">Loading…</p>';
+      fetchSections(title);
+    }
+
+    function close() {
+      sheet?.classList.replace('toc-sheet--visible', 'toc-sheet--hidden');
+      backdrop?.classList.remove('toc-sheet__backdrop--visible');
+    }
+
+    async function fetchSections(title) {
+      try {
+        const url = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=sections&format=json&origin=*`;
+        const res  = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const sections = data?.parse?.sections || [];
+        render(sections);
+      } catch {
+        if (list) list.innerHTML = '<p class="toc-sheet__error">Could not load contents.</p>';
+      }
+    }
+
+    function render(sections) {
+      if (!list) return;
+
+      if (sections.length === 0) {
+        list.innerHTML = '<p class="toc-sheet__error">No sections found.</p>';
+        return;
+      }
+
+      list.innerHTML = '';
+      sections.forEach(sec => {
+        const level = parseInt(sec.toclevel, 10) || 1;
+        const btn = document.createElement('button');
+        btn.className = `toc-item toc-item--level${level}`;
+        btn.textContent = stripHtml(sec.line);
+        btn.setAttribute('data-anchor', sec.anchor);
+
+        btn.addEventListener('click', () => {
+          close();
+          scrollToSection(sec.anchor);
+        });
+
+        list.appendChild(btn);
+      });
+    }
+
+    function scrollToSection(anchor) {
+      /* Try to find the heading by id in the reader body */
+      const readerEl  = document.getElementById('card-reader');
+      const readerBody = document.getElementById('reader-body');
+      if (!readerEl || !readerBody) return;
+
+      /* Wikipedia anchors may have underscores or spaces */
+      const id1 = anchor;
+      const id2 = anchor.replace(/_/g, ' ');
+      const heading =
+        readerBody.querySelector(`#${CSS.escape(id1)}`) ||
+        readerBody.querySelector(`[id="${id2}"]`) ||
+        readerBody.querySelector(`[data-mw-anchor="${id1}"]`);
+
+      if (heading) {
+        const headerHeight = document.getElementById('reader-header')?.offsetHeight || 48;
+        readerEl.scrollTop = heading.offsetTop - headerHeight - 8;
+      }
+    }
+
+    function stripHtml(html) {
+      const d = document.createElement('div');
+      d.innerHTML = html;
+      return d.textContent || d.innerText || '';
+    }
+
+    /* Wire buttons */
+    tocBtn?.addEventListener('click', () => {
+      const title = navStack.length > 0
+        ? navStack[navStack.length - 1].title
+        : currentArticle?.title;
+      if (title) open(title);
+    });
+
+    closeBtn?.addEventListener('click', close);
+    backdrop?.addEventListener('click', close);
+
+    return { open, close };
+  })();
+
   function closeAllOverlays() {
     [
       'profile-overlay',
@@ -1357,14 +1467,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       'leaderboard-overlay',
       'stats-overlay',
       'settings',
+      'guest-picker-overlay',
     ].forEach(id => {
       document.getElementById(id)
         ?.classList.replace('overlay--visible', 'overlay--hidden');
     });
-    /* Also close profile/leaderboard/stats via their own close fns
-       so any internal state is properly reset */
-    if (typeof Profile    !== 'undefined') Profile.close?.();
+    if (typeof Profile      !== 'undefined') Profile.close?.();
     if (typeof SavesOverlay !== 'undefined') SavesOverlay.close?.();
+    if (typeof TOC          !== 'undefined') TOC.close?.();
   }
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }

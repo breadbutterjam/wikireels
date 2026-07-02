@@ -187,6 +187,12 @@ const Profile = (() => {
         SavesOverlay.open();
       });
 
+    document.getElementById('btn-change-guest-identity')
+      ?.addEventListener('click', () => {
+        close();
+        GuestPicker.open();
+      });
+
     /* Top bar direct-access icons */
     document.getElementById('btn-stats-topbar')
       ?.addEventListener('click', () => Stats.open());
@@ -310,15 +316,17 @@ const Profile = (() => {
       const emailEl = document.getElementById('profile-email');
 
       if (user.isAnonymous) {
-        /* Guest — show generated name and animal avatar */
+        /* Guest — show display name/avatar (may be overridden by picker) */
         const identity = Auth.generateGuestIdentity();
+        const changeBtn = document.getElementById('btn-change-guest-identity');
         if (photo) {
-          photo.src = identity.avatar;
+          photo.src = identity.displayAvatar;
           photo.style.display = '';
           photo.onerror = () => { photo.style.display = 'none'; };
         }
-        if (nameEl)  nameEl.textContent  = identity.name;
+        if (nameEl)  nameEl.textContent  = identity.displayName;
         if (emailEl) emailEl.textContent = 'guest';
+        if (changeBtn) { changeBtn.classList.remove('profile-section--hidden'); changeBtn.style.display = ''; }
       } else {
         /* Google account */
         if (photo) {
@@ -873,6 +881,76 @@ const SavesOverlay = (() => {
     return String(s || '')
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  return { init, open, close };
+
+})();
+
+/* ══════════════════════════════════════════════════════
+   GUEST IDENTITY PICKER
+   Shows a grid of animals — tap one to update display
+   name and avatar without changing underlying identity.
+══════════════════════════════════════════════════════ */
+
+const GuestPicker = (() => {
+
+  function init() {
+    document.getElementById('guest-picker-close')
+      ?.addEventListener('click', () => {
+        close();
+        Profile.open();
+      });
+  }
+
+  function open() {
+    const overlay = document.getElementById('guest-picker-overlay');
+    overlay?.classList.replace('overlay--hidden', 'overlay--visible');
+    render();
+  }
+
+  function close() {
+    document.getElementById('guest-picker-overlay')
+      ?.classList.replace('overlay--visible', 'overlay--hidden');
+  }
+
+  function render() {
+    const grid = document.getElementById('guest-picker-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const identity = Auth.generateGuestIdentity();
+    const currentAnimal = identity.displayAvatar
+      .replace(Auth.AVATAR_BASE, '').replace('.png', '');
+
+    Auth.GUEST_ANIMALS.forEach(animal => {
+      const avatarPath = `${Auth.AVATAR_BASE}${animal}.png`;
+      const isSelected = animal === currentAnimal;
+
+      const el = document.createElement('button');
+      el.className = `guest-picker__item ${isSelected ? 'guest-picker__item--selected' : ''}`;
+      el.setAttribute('aria-label', animal);
+      el.innerHTML = `
+        <img class="guest-picker__img" src="${avatarPath}" alt="${animal}"
+             onerror="this.style.display='none'"/>
+        <span class="guest-picker__label">${animal}</span>
+      `;
+
+      el.addEventListener('click', async () => {
+        const result = Auth.setGuestDisplayIdentity(animal);
+        if (!result) return;
+
+        /* Update leaderboard with new display identity */
+        if (typeof Sync !== 'undefined' && Auth.isSignedIn()) {
+          await Sync.updateLeaderboard();
+        }
+
+        close();
+        Profile.open();
+      });
+
+      grid.appendChild(el);
+    });
   }
 
   return { init, open, close };

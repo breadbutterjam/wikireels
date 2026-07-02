@@ -120,6 +120,10 @@ const Auth = (() => {
   function generateGuestIdentity() {
     const NAME_KEY   = 'rh_guest_name';
     const AVATAR_KEY = 'rh_guest_avatar';
+    /* Display overrides — separate from the identity key so the
+       underlying uid/leaderboard-id stays stable */
+    const DISPLAY_NAME_KEY   = 'rh_guest_display_name';
+    const DISPLAY_AVATAR_KEY = 'rh_guest_display_avatar';
 
     let name, avatar;
 
@@ -131,13 +135,10 @@ const Auth = (() => {
     if (!name) {
       const adj    = _pickRandom(GUEST_ADJECTIVES);
       const animal = _pickRandom(GUEST_ANIMALS);
-      const num    = String(Math.floor(Math.random() * 9000) + 1000); /* 1000–9999 */
+      const num    = String(Math.floor(Math.random() * 9000) + 1000);
       name = `${adj}-${animal}-${num}`;
-
-      /* Pick avatar by animal name so it's always consistent */
       const animalIdx = GUEST_ANIMALS.indexOf(animal);
       avatar = GUEST_AVATARS[animalIdx] ?? GUEST_AVATARS[0];
-
       try {
         localStorage.setItem(NAME_KEY,   name);
         localStorage.setItem(AVATAR_KEY, avatar);
@@ -145,7 +146,6 @@ const Auth = (() => {
     }
 
     if (!avatar) {
-      /* Fallback: derive from stored name if avatar key was somehow lost */
       const parts = name.split('-');
       const animal = parts[1] || '';
       const idx = GUEST_ANIMALS.indexOf(animal);
@@ -153,7 +153,46 @@ const Auth = (() => {
       try { localStorage.setItem(AVATAR_KEY, avatar); } catch {}
     }
 
-    return { name, avatar };
+    /* Apply display overrides if the user has customised their look */
+    let displayName   = name;
+    let displayAvatar = avatar;
+    try {
+      displayName   = localStorage.getItem(DISPLAY_NAME_KEY)   || name;
+      displayAvatar = localStorage.getItem(DISPLAY_AVATAR_KEY) || avatar;
+    } catch {}
+
+    return { name, avatar, displayName, displayAvatar };
+  }
+
+  /* ── Set guest display identity (chosen by user in the picker) ──
+        Updates the display keys without touching the stable identity. */
+  function setGuestDisplayIdentity(animal) {
+    const idx = GUEST_ANIMALS.indexOf(animal);
+    if (idx < 0) return;
+    const avatar = GUEST_AVATARS[idx];
+    /* Construct a display name: pick a random adjective + chosen animal + stable number
+       (extract number from the original stored name so it stays consistent) */
+    let num = '0000';
+    try {
+      const stored = localStorage.getItem('rh_guest_name') || '';
+      const parts  = stored.split('-');
+      num = parts[parts.length - 1] || '0000';
+    } catch {}
+    const adj  = _pickRandom(GUEST_ADJECTIVES);
+    const displayName = `${adj}-${animal}-${num}`;
+    try {
+      localStorage.setItem('rh_guest_display_name',   displayName);
+      localStorage.setItem('rh_guest_display_avatar', avatar);
+    } catch {}
+    return { displayName, displayAvatar: avatar };
+  }
+
+  /* ── Clear guest display overrides (revert to original random identity) ── */
+  function clearGuestDisplayIdentity() {
+    try {
+      localStorage.removeItem('rh_guest_display_name');
+      localStorage.removeItem('rh_guest_display_avatar');
+    } catch {}
   }
 
   /* ── Sign out ── */
@@ -187,11 +226,11 @@ const Auth = (() => {
     if (!_user) return null;
 
     if (_user.isAnonymous) {
-      const { name, avatar } = generateGuestIdentity();
+      const { displayName, displayAvatar } = generateGuestIdentity();
       return {
-        displayName: name,
+        displayName: displayName,
         email:       '',
-        photoURL:    avatar,
+        photoURL:    displayAvatar,
         uid:         _user.uid,
         isGuest:     true,
       };
@@ -220,6 +259,11 @@ const Auth = (() => {
     uid,
     userRecord,
     generateGuestIdentity,
+    setGuestDisplayIdentity,
+    clearGuestDisplayIdentity,
+    GUEST_ANIMALS,
+    GUEST_AVATARS,
+    AVATAR_BASE,
   };
 
 })();

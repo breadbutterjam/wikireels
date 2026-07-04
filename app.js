@@ -683,6 +683,18 @@ document.addEventListener('DOMContentLoaded', async () => {
      Wikipedia HTML API uses relative hrefs: ./Title, ../wiki/Title,
      /wiki/Title, and full https://en.wikipedia.org/wiki/Title      */
   readerBodyEl.addEventListener('click', e => {
+    /* ── Image click — show modal ── */
+    const img = e.target.closest('img');
+    if (img && readerBodyEl.contains(img)) {
+      e.preventDefault();
+      e.stopPropagation();
+      /* Try to get caption from surrounding figure/thumb */
+      const figure = img.closest('figure, .thumb, .thumbinner');
+      const caption = figure?.querySelector('figcaption, .thumbcaption')?.textContent?.trim() || '';
+      ReaderImageModal.open(img.src, caption);
+      return;
+    }
+
     const a = e.target.closest('a[href]');
     if (!a) return;
 
@@ -690,6 +702,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.stopPropagation();
 
     const href = a.getAttribute('href') || '';
+
+    /* ── File: link — find the image inside and show modal ── */
+    if (href.includes('File:') || href.includes('file:')) {
+      const imgEl = a.querySelector('img') || a.closest('figure, .thumb')?.querySelector('img');
+      if (imgEl) {
+        const figure  = a.closest('figure, .thumb, .thumbinner');
+        const caption = figure?.querySelector('figcaption, .thumbcaption')?.textContent?.trim() || '';
+        ReaderImageModal.open(imgEl.src, caption);
+      }
+      return;
+    }
 
     /* Extract Wikipedia article title from any href format */
     const title = extractWikiTitle(href);
@@ -700,7 +723,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.open(`https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`, '_blank', 'noopener');
         return;
       }
-      /* Save scroll position of current level */
       if (navStack.length > 0) {
         navStack[navStack.length - 1].scrollTop = readerEl.scrollTop;
       }
@@ -708,7 +730,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    /* Non-article link (external, file, special page) — new tab */
+    /* Non-article link (external, special page) — new tab */
     const fullHref = a.href || href;
     if (fullHref && fullHref.startsWith('http')) {
       window.open(fullHref, '_blank', 'noopener');
@@ -742,13 +764,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     div.innerHTML = html;
     div.querySelectorAll(
       '.infobox, table, sup, .mw-editsection, .reference, ' +
-      '.navbox, .thumb, .metadata, .hatnote, .toc, ' +
+      '.navbox, .metadata, .hatnote, .toc, ' +
       '.sistersitebox, .reflist, .mw-references-wrap, ' +
       '.mw-empty-elt, .noprint, style, script'
     ).forEach(el => el.remove());
     div.querySelectorAll('img').forEach(img => {
       const src = img.getAttribute('src') || '';
       if (src.startsWith('//')) img.src = 'https:' + src;
+      /* Make images tappable */
+      img.style.cursor = 'pointer';
+      img.style.maxWidth = '100%';
     });
     return div.innerHTML;
   }
@@ -1459,6 +1484,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     return { open, close };
   })();
 
+  /* ══════════════════════════════════════════════════════
+     READER IMAGE MODAL
+     Shows a tapped image full-screen with caption.
+  ══════════════════════════════════════════════════════ */
+
+  const ReaderImageModal = (() => {
+    /* Build modal DOM on first use */
+    let modal, imgEl, captionEl, closeBtn;
+
+    function ensureDOM() {
+      if (modal) return;
+      modal = document.createElement('div');
+      modal.className = 'reader-img-modal';
+      modal.innerHTML = `
+        <button class="reader-img-modal__close" aria-label="Close">✕</button>
+        <div class="reader-img-modal__stage">
+          <img class="reader-img-modal__img" src="" alt=""/>
+        </div>
+        <p class="reader-img-modal__caption"></p>
+      `;
+      document.body.appendChild(modal);
+
+      imgEl     = modal.querySelector('.reader-img-modal__img');
+      captionEl = modal.querySelector('.reader-img-modal__caption');
+      closeBtn  = modal.querySelector('.reader-img-modal__close');
+
+      closeBtn.addEventListener('click', close);
+      modal.addEventListener('click', e => {
+        if (e.target === modal || e.target === modal.querySelector('.reader-img-modal__stage')) {
+          close();
+        }
+      });
+
+      /* Swipe down to dismiss */
+      let sy = 0;
+      modal.addEventListener('touchstart', e => { sy = e.touches[0].clientY; }, { passive: true });
+      modal.addEventListener('touchend', e => {
+        if (e.changedTouches[0].clientY - sy > 60) close();
+      }, { passive: true });
+    }
+
+    function open(src, caption) {
+      ensureDOM();
+      imgEl.src = src || '';
+      captionEl.textContent = caption || '';
+      captionEl.style.display = caption ? '' : 'none';
+      modal.classList.add('reader-img-modal--visible');
+    }
+
+    function close() {
+      modal?.classList.remove('reader-img-modal--visible');
+    }
+
+    return { open, close };
+  })();
+
   function closeAllOverlays() {
     [
       'profile-overlay',
@@ -1472,9 +1553,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById(id)
         ?.classList.replace('overlay--visible', 'overlay--hidden');
     });
-    if (typeof Profile      !== 'undefined') Profile.close?.();
-    if (typeof SavesOverlay !== 'undefined') SavesOverlay.close?.();
-    if (typeof TOC          !== 'undefined') TOC.close?.();
+    if (typeof Profile        !== 'undefined') Profile.close?.();
+    if (typeof SavesOverlay   !== 'undefined') SavesOverlay.close?.();
+    if (typeof TOC            !== 'undefined') TOC.close?.();
+    if (typeof ReaderImageModal !== 'undefined') ReaderImageModal.close?.();
   }
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }

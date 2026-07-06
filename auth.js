@@ -118,6 +118,7 @@ const Auth = (() => {
   }
 
   function generateGuestIdentity() {
+    // console.log('Generating guest identity...');
     const NAME_KEY   = 'rh_guest_name';
     const AVATAR_KEY = 'rh_guest_avatar';
     /* Display overrides — separate from the identity key so the
@@ -131,6 +132,8 @@ const Auth = (() => {
       name   = localStorage.getItem(NAME_KEY);
       avatar = localStorage.getItem(AVATAR_KEY);
     } catch {}
+
+    // console.log('Loaded guest identity from localStorage:', { name, avatar });
 
     if (!name) {
       const adj    = _pickRandom(GUEST_ADJECTIVES);
@@ -160,13 +163,14 @@ const Auth = (() => {
       displayName   = localStorage.getItem(DISPLAY_NAME_KEY)   || name;
       displayAvatar = localStorage.getItem(DISPLAY_AVATAR_KEY) || avatar;
     } catch {}
-
+    // console.log('Guest identity:', { name, avatar, displayName, displayAvatar });
     return { name, avatar, displayName, displayAvatar };
   }
 
   /* ── Set guest display identity (chosen by user in the picker) ──
         Updates the display keys without touching the stable identity. */
   function setGuestDisplayIdentity(animal) {
+    console.log('Setting guest display identity to:', animal);
     const idx = GUEST_ANIMALS.indexOf(animal);
     if (idx < 0) return;
     const avatar = GUEST_AVATARS[idx];
@@ -181,6 +185,7 @@ const Auth = (() => {
     const adj  = _pickRandom(GUEST_ADJECTIVES);
     const displayName = `${adj}-${animal}-${num}`;
     try {
+      console.log('Setting guest display identity:', displayName, avatar);
       localStorage.setItem('rh_guest_display_name',   displayName);
       localStorage.setItem('rh_guest_display_avatar', avatar);
     } catch {}

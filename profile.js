@@ -215,7 +215,7 @@ const Profile = (() => {
   }
 
   function updateTopBarAvatar(user) {
-    // console.log("updateTopBarAvatar user:", user);
+    console.log("updateTopBarAvatar user:", user);
     const img  = document.getElementById('top-bar-avatar');
     const icon = document.getElementById('top-bar-avatar-icon');
     if (!img || !icon) return;
@@ -226,7 +226,7 @@ const Profile = (() => {
     // console.log("Initial photoURL:", photoURL);
     if (!user || user?.isAnonymous) {
       const identity = Auth.generateGuestIdentity();
-      photoURL = identity.avatar;
+      photoURL = identity.displayAvatar;
     }
 
     // console.log("Final photoURL:", photoURL);
@@ -274,13 +274,14 @@ const Profile = (() => {
   }
 
   function close() {
+    updateTopBarAvatar(Auth.currentUser());
     document.getElementById('profile-overlay')
       ?.classList.replace('overlay--visible', 'overlay--hidden');
   }
 
   function refresh() {
     const user = Auth.currentUser();
-
+    // console.log("Refreshing profile overlay, current user:", user);
     //
 
     /* Auth hasn't resolved yet — don't touch visibility */
@@ -314,10 +315,11 @@ const Profile = (() => {
       const photo   = document.getElementById('profile-photo');
       const nameEl  = document.getElementById('profile-name');
       const emailEl = document.getElementById('profile-email');
-
+      // console.log("Rendering profile for user:", user);
       if (user.isAnonymous) {
         /* Guest — show display name/avatar (may be overridden by picker) */
         const identity = Auth.generateGuestIdentity();
+        // console.log("Rendering guest profile with identity:", identity);
         const changeBtn = document.getElementById('btn-change-guest-identity');
         if (photo) {
           photo.src = identity.displayAvatar;
@@ -369,9 +371,10 @@ const Profile = (() => {
   }
 
   function renderTopBarAvatar() {
+    console.log("Rendering top bar avatar");
     const photo = document.getElementById('top-bar-avatar');
     const identity = Auth.generateGuestIdentity();
-    photo.src = identity.avatar;
+    photo.src = identity.displayAvatar;
     photo.style.display = '';
     photo.onerror = () => { photo.style.display = 'none'; };
   }
@@ -381,15 +384,19 @@ const Profile = (() => {
     const nameEl  = document.getElementById('profile-name');
     const emailEl = document.getElementById('profile-email');
     
+    /* Guest — show display name/avatar (may be overridden by picker) */
     const identity = Auth.generateGuestIdentity();
+    // console.log("Rendering guest profile with identity:", identity);
+    const changeBtn = document.getElementById('btn-change-guest-identity');
     if (photo) {
-      photo.src = identity.avatar;
+      photo.src = identity.displayAvatar;
       photo.style.display = '';
       photo.onerror = () => { photo.style.display = 'none'; };
     }
-    if (nameEl)  nameEl.textContent  = identity.name;
+    if (nameEl)  nameEl.textContent  = identity.displayName;
     if (emailEl) emailEl.textContent = 'guest';
-  }
+    if (changeBtn) { changeBtn.classList.remove('profile-section--hidden'); changeBtn.style.display = ''; }
+}
 
   function renderBadges() {
     const grid    = document.getElementById('profile-badges');

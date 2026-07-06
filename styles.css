@@ -2811,10 +2811,18 @@ body.dark .nav-menu__item {
 /* ── Account info ── */
 .profile-account {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem var(--pad-x);
+  /* align-items: center; */
+  /* gap: 1rem; */
+  /* padding: 1.5rem var(--pad-x); */
+  padding: 1rem 0;
   border-bottom: 1px solid var(--c-border);
+}
+
+.profile-account_photo-container{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 var(--pad-x);
 }
 
 .profile-account__photo {

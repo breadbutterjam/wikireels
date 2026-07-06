@@ -687,16 +687,18 @@
       <!-- Account info: shown only when signed in -->
       <div id="profile-account-section" class="profile-section--hidden" style="display:none">
         <div class="profile-account">
-          <img class="profile-account__photo" id="profile-photo" src="" alt="" width="48" height="48"/>
-          <div class="profile-account__info">
-            <p class="profile-account__name" id="profile-name"></p>
-            <p class="profile-account__email" id="profile-email"></p>
+          <div class="profile-account_photo-container">
+            <img class="profile-account__photo" id="profile-photo" src="" alt="" width="48" height="48"/>
+            <div class="profile-account__info">
+              <p class="profile-account__name" id="profile-name"></p>
+              <p class="profile-account__email" id="profile-email"></p>
+            </div>
           </div>
-        </div>
-        <!-- Shown only for guest users -->
+          <!-- Shown only for guest users -->
         <button class="profile-change-guest-btn profile-section--hidden" id="btn-change-guest-identity">
-          change avatar &amp; name
+          change avatar 
         </button>
+        </div>
       </div>
 
       <!-- Stats: always shown -->

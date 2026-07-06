@@ -2814,6 +2814,8 @@ body.dark .nav-menu__item {
   /* align-items: center; */
   /* gap: 1rem; */
   /* padding: 1.5rem var(--pad-x); */
+  flex-direction: column;
+  gap: 0.3rem;
   padding: 1rem 0;
   border-bottom: 1px solid var(--c-border);
 }

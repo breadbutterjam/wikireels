@@ -330,7 +330,9 @@ const Profile = (() => {
         if (emailEl) emailEl.textContent = 'guest';
         if (changeBtn) { changeBtn.classList.remove('profile-section--hidden'); changeBtn.style.display = ''; }
       } else {
-        /* Google account */
+        /* Google account — hide the guest identity change button */
+        const changeBtn = document.getElementById('btn-change-guest-identity');
+        if (changeBtn) { changeBtn.classList.add('profile-section--hidden'); changeBtn.style.display = 'none'; }
         if (photo) {
           photo.src = user.photoURL || '';
           photo.style.display = user.photoURL ? '' : 'none';

@@ -342,7 +342,7 @@ button {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   /* clear the reader header — measured: safe-top + ~3rem header height */
-  padding: calc(var(--safe-top) + 3.6rem) var(--pad-x) calc(var(--safe-bottom) + 4rem);
+  padding: calc(var(--safe-top) + 2rem) var(--pad-x) calc(var(--safe-bottom) + 4rem);
   opacity: 0;
   pointer-events: none;
   transition: opacity 150ms var(--ease-smooth) 120ms;
@@ -4332,7 +4332,8 @@ body.dark .nav-menu__item {
   font-size: 0.82rem;
   font-weight: 400;
   padding: 0.65rem var(--pad-x) 0.65rem calc(var(--pad-x) + 1rem);
-  color: var(--c-ink-muted);
+  /* color: var(--c-ink-muted); */
+  color: var(--c-ink);
 }
 
 .toc-item--level3 {

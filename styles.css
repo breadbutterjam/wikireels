@@ -4482,6 +4482,7 @@ body.dark .nav-menu__item {
   max-height: 100%;
   object-fit: contain;
   display: block;
+  width: 100%;
 }
 
 .reader-img-modal__caption {

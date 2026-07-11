@@ -294,7 +294,7 @@ const Today = (() => {
         <span class="card__category">${item.isRSS ? 'News' : 'In the news'}</span>
         ${item.pubDateText ? `<span class="today-card__pubdate">${escHtml(item.pubDateText)}</span>` : ''}
       </div>
-      <h1 class="card__title">${escHtml(item.title)}</h1>
+      <h1 class="card__title">${escUnderscore(escHtml(item.title))}</h1>
       <div class="card__body"><p>${escHtml(item.summary)}</p></div>
       <div class="card__fade"></div>
       <button class="card__readmore">read more</button>
@@ -457,6 +457,10 @@ const Today = (() => {
       if (src.startsWith('//')) img.src = 'https:' + src;
     });
     return div.innerHTML;
+  }
+
+  function escUnderscore(s) {
+    return String(s || '').replace(/_/g, '\ ');
   }
 
   function escHtml(s) {

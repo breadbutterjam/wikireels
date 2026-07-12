@@ -119,10 +119,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const bodyPrev  = document.getElementById('body-prev');
 
   /* Action buttons */
-  const btnLike    = document.getElementById('btn-like');
-  const btnGallery = document.getElementById('btn-gallery');
+  const btnMore    = document.getElementById('btn-more');
   const btnSave    = document.getElementById('btn-save');
   const btnProfile = document.getElementById('btn-profile');
+  const actionMenu = document.getElementById('action-menu');
+  const actionOverlay = document.getElementById('action-menu-overlay');
+  const actionInterested = document.getElementById('action-interested');
+  const actionDislike = document.getElementById('action-dislike');
+  const actionViewImages = document.getElementById('action-view-images');
 
   /* Gallery */
   const gallery      = document.getElementById('gallery');
@@ -356,8 +360,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     bodyEl.innerHTML    = `<p>${a.extract || ''}</p>`;
 
     /* Sync action button states with store */
-    btnLike.classList.toggle('action-btn--liked', Store.isLiked(a.title));
+    btnMore.classList.toggle('action-btn--liked', Store.isLiked(a.title));
     btnSave.classList.toggle('action-btn--saved', Store.isSaved(a.title));
+    closeActionMenu();
 
     /* Track history */
     Store.addHistory(a);
@@ -782,35 +787,30 @@ document.addEventListener('DOMContentLoaded', async () => {
      LIKE
   ══════════════════════════════════════════════════════ */
 
-  btnLike.addEventListener('click', () => toggleLike());
-
   function toggleLike(tapX, tapY) {
     if (!currentArticle) return;
     const liked = Store.isLiked(currentArticle.title);
     if (liked) {
       Store.unlike(currentArticle.title);
-      btnLike.classList.remove('action-btn--liked');
+      btnMore.classList.remove('action-btn--liked');
     } else {
       Store.like(currentArticle);
-      btnLike.classList.add('action-btn--liked');
+      btnMore.classList.add('action-btn--liked');
       burstLike(tapX, tapY);
     }
   }
 
   function burstLike(x, y) {
-    /* Brief lightbulb glow burst — CSS handles the animation,
-       we just retrigger it by removing/adding the class */
-    btnLike.classList.remove('action-btn--liked');
-    void btnLike.offsetWidth; /* force reflow */
-    btnLike.classList.add('action-btn--liked');
+    btnMore.classList.remove('action-btn--liked');
+    void btnMore.offsetWidth;
+    btnMore.classList.add('action-btn--liked');
 
-    /* Optional: floating emoji burst at tap location */
     if (x && y) {
       const spark = document.createElement('span');
-      spark.textContent = '💡';
+      spark.textContent = '✨';
       spark.style.cssText = `
         position:fixed; left:${x}px; top:${y}px;
-        font-size:2rem; pointer-events:none; z-index:999;
+        font-size:1.4rem; pointer-events:none; z-index:999;
         animation: sparkFloat 700ms ease-out forwards;
         transform: translate(-50%, -50%);
       `;
@@ -874,7 +874,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   let gStartX = 0, gDragging = false, gDragX = 0;
 
   galleryClose.addEventListener('click', closeGallery);
-  btnGallery.addEventListener('click', openGallery);
+
+  function openActionMenu() {
+    actionMenu.classList.remove('action-menu--hidden');
+    actionMenu.classList.add('action-menu--visible');
+    actionOverlay.classList.remove('action-menu-overlay--hidden');
+  }
+
+  function closeActionMenu() {
+    actionMenu.classList.add('action-menu--hidden');
+    actionMenu.classList.remove('action-menu--visible');
+    actionOverlay.classList.add('action-menu-overlay--hidden');
+  }
+
+  btnMore.addEventListener('click', e => {
+    e.stopPropagation();
+    openActionMenu();
+  });
+
+  actionOverlay.addEventListener('click', closeActionMenu);
+
+  actionInterested.addEventListener('click', () => {
+    toggleLike();
+    closeActionMenu();
+  });
+
+  actionDislike.addEventListener('click', () => {
+    if (currentArticle) Store.dislike(currentArticle.title);
+    closeActionMenu();
+    showToast('Got it — fewer like this');
+    goNext();
+  });
+
+  actionViewImages.addEventListener('click', () => {
+    closeActionMenu();
+    openGallery();
+  });
 
   /* Touch on the stage for carousel swiping */
   galleryStage.addEventListener('touchstart', e => {

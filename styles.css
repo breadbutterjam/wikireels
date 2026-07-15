@@ -12,7 +12,9 @@
   --c-surface:     #f0ede6;
   --c-ink:         #1a1916;
   --c-ink-muted:   #6b6860;
-  --c-ink-faint:   #b0ada6;
+  
+  --c-ink-faint:   #686763;
+  /* --c-ink-faint:   #b0ada6; */
   --c-accent:      #c8a96e;
   --c-accent-warm: #e8d4a8;
   --c-border:      rgba(26, 25, 22, 0.1);
@@ -22,7 +24,8 @@
   --c-surface-dark:    #1c1b19;
   --c-ink-dark:        #ede9e0;
   --c-ink-muted-dark:  #807d76;
-  --c-ink-faint-dark:  #4a4844;
+  --c-ink-faint-dark:  #817d76;
+  /* --c-ink-faint-dark:  #4a4844; */
   --c-border-dark:     rgba(237, 233, 224, 0.1);
   --c-border-mid-dark: rgba(237, 233, 224, 0.18);
 
@@ -210,6 +213,7 @@ button {
   color: var(--c-ink);
   margin-bottom: 1rem;
   flex-shrink: 0;
+  padding-top: 0em;
 }
 
 /* ── CARD BODY TEXT ──────────────────────────────────────── */
@@ -248,7 +252,8 @@ button {
   font-family: var(--f-sans);
   font-size: var(--fs-ui);
   font-weight: 400;
-  color: var(--c-ink-muted);
+  /* color: var(--c-ink-muted); */
+  color: var(--c-ink);
   letter-spacing: 0.06em;
   opacity: 0.55;
   transition: opacity var(--dur-fast) var(--ease-smooth);
@@ -573,7 +578,7 @@ button {
 }
 
 #card-reader{
-  top: 2rem;
+  top: 3rem;
 }
 
 /* Header row */
@@ -3596,6 +3601,8 @@ body.dark .nav-menu__item {
   color: var(--c-ink-muted);
   margin-top: 1.25rem;
   text-transform: lowercase;
+  padding-bottom: 0px;  
+  text-decoration: underline;
 }
 
 .signin-nudge__btn--guest:active {
@@ -3605,7 +3612,8 @@ body.dark .nav-menu__item {
 .signin-nudge__help {
   font-family: var(--f-sans);
   font-size: 0.7rem;
-  color: var(--c-ink-faint);
+  /* color: var(--c-ink-faint); */
+  color: var(--c-ink-muted);
   letter-spacing: 0.02em;
   text-align: center;
   margin-top: -0.1rem;

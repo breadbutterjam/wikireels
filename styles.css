@@ -540,6 +540,30 @@ button {
   pointer-events: none;
 }
 
+.tts{
+  /* background-image:url('img/medium-volume.png'); */
+  position: absolute;
+  top: 2rem; 
+  right: 0px;
+  color: var(--c-ink-muted);
+  z-index: 100;
+  top: 32px;
+}
+
+.tts--readMore{
+  top: 5rem;
+}
+.tts_path{
+  stroke: var(--c-ink);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tts--finished, .hide_tts_icon{
+  display:none;
+}
+
 .loader__ring {
   width: 28px;
   height: 28px;

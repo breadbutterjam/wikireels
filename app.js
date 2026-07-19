@@ -127,6 +127,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const actionInterested = document.getElementById('action-interested');
   const actionDislike = document.getElementById('action-dislike');
   const actionViewImages = document.getElementById('action-view-images');
+  const actionReadOut = document.getElementById('action-read-out');
+  const ttsIcon = document.getElementById('tts_icons');
+  const ttsPause = document.getElementById('tts_pause');
+  const ttsPlay = document.getElementById('tts_play');
 
   /* Gallery */
   const gallery      = document.getElementById('gallery');
@@ -150,6 +154,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let isAnimating  = false;
   let isReaderOpen = false;
   let currentArticle = null;
+
+  let oSpeechUtterance; //used for text to speech
 
   /* ══════════════════════════════════════════════════════
      CATEGORY PICKER — first visit only
@@ -405,6 +411,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function goNext() {
+    // console.log('goNext called', speechSynthesis.speaking);
+    if (speechSynthesis.speaking) stopSpeechSynthesis();
     if (isAnimating) return;
     if (isReaderOpen) exitReader();
     isAnimating = true;
@@ -440,7 +448,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  function stopSpeechSynthesis() {
+    speechSynthesis.cancel();
+    ttsPause.classList.add('hide_tts_icon');
+    ttsPlay.classList.add('hide_tts_icon');
+  }
+
   async function goPrev() {
+    // console.log('goPrev called', speechSynthesis.speaking);
+    if (speechSynthesis.speaking) stopSpeechSynthesis();
     if (isAnimating) return;
     if (isReaderOpen) exitReader();
     isAnimating = true;
@@ -572,6 +588,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       cardCurrent.classList.add('card--reader');
     }
 
+    ttsIcon.classList.add('tts--readMore');
+
     /* Push to stack — include article data if entering from card (title===null),
        otherwise it's a deep-dive link or external entry (saves/search) */
     navStack.push({
@@ -670,6 +688,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function exitReader() {
     cardCurrent.classList.remove('card--reader');
+    ttsIcon.classList.remove('tts--readMore');
     isReaderOpen = false;
     navStack = [];
     /* Close TOC if open */
@@ -909,6 +928,68 @@ document.addEventListener('DOMContentLoaded', async () => {
   actionViewImages.addEventListener('click', () => {
     closeActionMenu();
     openGallery();
+  });
+
+  actionReadOut.addEventListener('click', () => {
+    console.log('actionReadOut clicked');
+    
+    
+    const ttsIcon = document.getElementById('tts_icons');
+    let bReadMoreMode = ttsIcon.classList.contains('tts--readMore');
+    
+
+    closeActionMenu();
+    console.log('actionReadOut currentArticle, bReadMoreMode:', currentArticle, bReadMoreMode);
+
+    // if (currentArticle || bReadMoreMode) {
+    if (currentArticle) {
+      // if (bReadMoreMode) {
+      //   // let strTitleText = document.getElementById('reader-body').innerText;
+      //   let strBodyText = document.getElementById('reader-body').innerText;
+      //   oSpeechUtterance = new SpeechSynthesisUtterance(strBodyText);
+      // }
+      // else {
+        oSpeechUtterance = new SpeechSynthesisUtterance(currentArticle.extract || '');
+      // }
+      
+      speechSynthesis.speak(oSpeechUtterance);
+      ttsIcon.classList.remove('tts--finished');
+      ttsPause.classList.remove('hide_tts_icon');
+      ttsPlay.classList.add('hide_tts_icon');
+      oSpeechUtterance.onend = () => {
+        // showToast('Read-aloud finished'); 
+        console.log('Read-aloud finished -- speechUtterance.onend fired');
+        ttsIcon.classList.add('tts--finished');
+      };
+    }
+  });
+
+  // ttsIcon.addEventListener('click', () => {
+  //   if (speechSynthesis.speaking) {
+  //     speechSynthesis.cancel();
+  //     console.log('Read-aloud finished --- ttsIcon clicked while speaking, speechSynthesis.cancel() called');
+
+  //     ttsIcon.classList.add('tts--finished');
+  //   }
+  // });
+
+  ttsPause.addEventListener('click', () => {
+    if (speechSynthesis.speaking && !speechSynthesis.paused) {
+      speechSynthesis.pause();
+      console.log('Paused speech synthesis');
+      ttsPause.classList.add('hide_tts_icon');
+      ttsPlay.classList.remove('hide_tts_icon');
+    }
+  });
+
+  ttsPlay.addEventListener('click', () => {
+    console.log('ttsPlay clicked ');
+    // if (speechSynthesis.paused) {
+      console.log('resuming speech synthesis');
+      speechSynthesis.resume();
+      ttsPause.classList.remove('hide_tts_icon');
+      ttsPlay.classList.add('hide_tts_icon');
+    // }
   });
 
   /* Touch on the stage for carousel swiping */

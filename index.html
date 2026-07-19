@@ -112,7 +112,24 @@
 
   <!-- ── ARTICLE FEED ───────────────────────────────────────── -->
   <div id="feed">
+    <div class="tts" id="tts_icons">
+    <!-- PAUSE SVG -->
+    <div id="tts_pause" class="hide_tts_icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="15" stroke="black" stroke-width="2"/>
+      <rect x="19" y="17" width="3" height="15" fill="black"/>
+      <rect x="26" y="17" width="3" height="15" fill="black"/>
+      </svg>
+    </div>
+    <!-- PLAY SVG -->
+    <div id="tts_play" class="hide_tts_icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="15" stroke="black" stroke-width="2"/>
+        <path d="M18.9378 17L31.0619 24L18.9375 32.25L18.9378 17Z" fill="black"/>
+      </svg>
 
+    </div>
+  </div>
     <!-- Active card -->
     <article id="card-current" class="card card--current" aria-live="polite">
 
@@ -134,6 +151,7 @@
 
       <!-- ── SUMMARY VIEW ── -->
       <div class="card__summary" id="card-summary">
+        
         <div class="card__meta">
           <span class="card__category" id="cat-current"></span>
         </div>
@@ -169,6 +187,7 @@
         <button class="action-menu__item" id="action-interested" role="menuitem">interested</button>
         <button class="action-menu__item action-menu__item--destructive" id="action-dislike" role="menuitem">not interested</button>
         <button class="action-menu__item" id="action-view-images" role="menuitem">view images</button>
+        <button class="action-menu__item" id="action-read-out" role="menuitem">read out loud</button>
       </div>
       <div class="action-menu-overlay action-menu-overlay--hidden" id="action-menu-overlay"></div>
 
@@ -216,11 +235,13 @@
         <optgroup label="National">
           <option value="https://indianexpress.com/section/india/feed/">Indian Express</option>
           <option value="https://www.thehindu.com/news/national/feeder/default.rss">The Hindu</option>
+          <option value="https://timesofindia.indiatimes.com/rssfeedstopstories.cms">Times of India - Top Stories</option>
         </optgroup>
         <optgroup label="Mumbai">
           <option value="https://www.mid-day.com/Resources/midday/rss/mumbai-news.xml">Mid-Day</option>
           <option value="https://www.hindustantimes.com/feeds/rss/cities/mumbai-news/rssfeed.xml">Hindustan Times</option>
           <option value="https://www.freepressjournal.in/rss/mumbai">Free Press Journal</option>
+          <option value="https://timesofindia.indiatimes.com/rssfeeds/-2128838597.cms">Times of India</option>
         </optgroup>
         <optgroup label="Sports">
           <option value="https://www.espncricinfo.com/rss/content/story/feeds/0.xml">ESPNcricinfo — Global</option>

@@ -255,7 +255,8 @@ button {
   /* color: var(--c-ink-muted); */
   color: var(--c-ink);
   letter-spacing: 0.06em;
-  opacity: 0.55;
+  /* opacity: 0.55; */
+  opacity: 0.85;
   transition: opacity var(--dur-fast) var(--ease-smooth);
   z-index: 4;
   white-space: nowrap;
@@ -2214,14 +2215,21 @@ body.dark .nav-menu {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(26, 25, 22, 0.4);
+  /* color: rgba(26, 25, 22, 0.4); */
+  color: rgba(26, 25, 22, 0.8);
   background: none;
   border: none;
   cursor: pointer;
+  flex-direction: column;
   transition:
     color var(--dur-fast),
     background var(--dur-fast),
     transform var(--dur-fast);
+}
+
+.nav-menu-item-label{
+  font-size: 0.9em;
+  margin-top: 0.2em;
 }
 
 body.dark .nav-menu__item {

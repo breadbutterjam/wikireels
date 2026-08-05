@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const catEl      = document.getElementById('cat-current');
   const bodyEl     = document.getElementById('body-current');
   const readMoreBtn= document.getElementById('readmore-current');
+  const summaryImage = document.getElementById('summary-image');
 
   /* Reader layer — current card */
   const readerEl        = document.getElementById('card-reader');
@@ -357,11 +358,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   ══════════════════════════════════════════════════════ */
 
   function renderCurrent() {
+    // console.log('renderCurrent called');
     const a = API.current();
     if (!a) return;
     currentArticle = a;
 
+    // console.log('renderCurrent article:', currentArticle);
+
     titleEl.textContent = a.title;
+
+    const showSummaryImage = document.getElementById('toggle-image-summary')?.checked;
+    // console.log('renderCurrent show summary thumbnail:', showSummaryImage);
+    if (showSummaryImage){
+      if (a.thumbnail && a.thumbnail.source) {
+        summaryImage.innerHTML = a.thumbnail.source ? `<img src="${a.thumbnail.source}" alt="Thumbnail for ${a.title}">` : '';
+      } 
+      else {
+        summaryImage.innerHTML = ''; //no thumbnail available
+      }
+    } else{
+      summaryImage.innerHTML = ''; //ideally this should happen on the toggle change event, but for now this is a quick fix
+    }
+    
     catEl.textContent   = a.description || '';
     bodyEl.innerHTML    = `<p>${a.extract || ''}</p>`;
 
@@ -931,7 +949,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   actionReadOut.addEventListener('click', () => {
-    console.log('actionReadOut clicked');
+    // console.log('actionReadOut clicked');
     
     
     const ttsIcon = document.getElementById('tts_icons');

@@ -38,6 +38,13 @@ const Settings = (() => {
         startupToggle.checked = !StartupStats.isHidden();
       }
 
+      /* Image visibility toggle */
+      const imageToggle = document.getElementById('toggle-image-summary');
+      if (imageToggle && typeof ImageSummary !== 'undefined') {
+        imageToggle.checked = ImageSummary.isVisible();
+      }
+
+
       /* Default mode selector */
       const modeSelect = document.getElementById('select-default-mode');
       if (modeSelect) {
@@ -107,6 +114,7 @@ const Settings = (() => {
     const startupStatsToggle = document.getElementById('toggle-startup-stats');
     startupStatsToggle?.addEventListener('change', () => {
       const show = startupStatsToggle.checked;
+      // console.log('Startupstats toggle changed, StartupStats:', StartupStats);
       if (typeof StartupStats !== 'undefined') StartupStats.setHidden(!show);
     });
 

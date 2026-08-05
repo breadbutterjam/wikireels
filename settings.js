@@ -7,6 +7,7 @@ const Settings = (() => {
   const FONT_KEY    = 'rh_fontsize';
   const DARK_KEY    = 'rh_dark';
   const MODE_KEY    = 'rh_default_mode';
+  const IMAGE_KEY   = 'rh_image_summary';
 
   let fontIdx = 2; /* default: 100% */
 
@@ -50,6 +51,13 @@ const Settings = (() => {
       if (modeSelect) {
         modeSelect.value = localStorage.getItem(MODE_KEY) || 'home';
       }
+
+      /*Image summary visibility */
+      const imageSummaryToggle = document.getElementById('toggle-image-summary');
+      if (imageSummaryToggle) {
+        const imageSummaryPref = localStorage.getItem(IMAGE_KEY);
+        imageSummaryToggle.checked = imageSummaryPref === '1';
+      }
     } catch {}
     applyFontSize();
   }
@@ -86,6 +94,7 @@ const Settings = (() => {
     const resetBtn    = document.getElementById('settings-reset');
     const showOBBtn   = document.getElementById('settings-show-onboarding');
     const catGrid     = document.getElementById('settings-cat-grid');
+    const imageToggle = document.getElementById('toggle-image-summary');
 
     /* Gear icon → settings pane */
     document.getElementById('btn-settings')
@@ -99,6 +108,13 @@ const Settings = (() => {
 
     /* Close settings */
     closeBtn?.addEventListener('click', () => closeSettings());
+
+    /* Image summary toggle */
+    imageToggle?.addEventListener('change', () => {
+      const on = imageToggle.checked;
+      try { localStorage.setItem(IMAGE_KEY, on ? '1' : '0'); } catch {}
+      syncPreferencesIfSignedIn();
+    });
 
     /* Dark mode toggle */
     darkToggle?.addEventListener('change', () => {
@@ -149,7 +165,7 @@ const Settings = (() => {
     resetBtn?.addEventListener('click', () => {
       if (!confirm('Clear all saved articles, likes, and history?')) return;
       ['rh_saves','rh_likes','rh_dislikes','rh_history',
-       'rh_categories','rh_onboarded', FONT_KEY, DARK_KEY]
+       'rh_categories','rh_onboarded', FONT_KEY, DARK_KEY, IMAGE_KEY]
         .forEach(k => { try { localStorage.removeItem(k); } catch {} });
       location.reload();
     });

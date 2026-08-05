@@ -637,6 +637,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         API.fetchFullHTML(articleTitle),
         title ? enrichNavStackEntry(articleTitle) : Promise.resolve(),
       ]);
+      // console.log("Fetched full HTML for", articleTitle);
+      // console.log("HTML:", html);
       readerBodyEl.innerHTML = cleanHTML(html);
       attachReaderLinks();
     } catch {
@@ -720,6 +722,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 320);
   }
 
+
+  /* function to take thumbnail url and return full size url */
+  function getFullImageUrl(url) {
+    const match = url.match(/\/commons\/thumb\/(.+?)\/\d+px-[^/]+$/);
+    return match 
+      ? `https://upload.wikimedia.org/wikipedia/commons/${match[1]}`
+      : url;
+  }
+
   /* Single delegated listener on readerBodyEl — attached once,
      handles all link clicks including dynamically loaded content.
      Wikipedia HTML API uses relative hrefs: ./Title, ../wiki/Title,
@@ -733,7 +744,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       /* Try to get caption from surrounding figure/thumb */
       const figure = img.closest('figure, .thumb, .thumbinner');
       const caption = figure?.querySelector('figcaption, .thumbcaption')?.textContent?.trim() || '';
-      ReaderImageModal.open(img.src, caption);
+
+      console.log('Image clicked:', img, 'src:', img.src, 'Caption:', caption);
+      // ReaderImageModal.open(img.src, caption);
+
+      const fullSizeUrl = getFullImageUrl(img.src);
+      if (fullSizeUrl && fullSizeUrl !== img.src) {
+        ReaderImageModal.open(fullSizeUrl, caption);
+      } else 
+      {
+        ReaderImageModal.open(img.src, caption);
+      }
+      
       return;
     }
 
@@ -1076,6 +1098,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const images = await API.fetchImages(activeTitle);
+      // console.log('Fetched images for', activeTitle, images);
       galleryImages = images;
 
       if (images.length === 0) {
@@ -1109,7 +1132,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       im.alt     = img.caption || '';
       im.loading = i === 0 ? 'eager' : 'lazy';
       if (img.src && img.src.startsWith('//')) img.src = 'https:' + img.src; /* clean up source */
-      im.src = img.src;
+      const fullSize = getFullImageUrl(img.src);
+      if (fullSize && fullSize !== img.src)
+      {
+        im.src = fullSize;
+      } else {
+        im.src = img.src;
+      }
       slide.appendChild(im);
       galleryTrack.appendChild(slide);
 
